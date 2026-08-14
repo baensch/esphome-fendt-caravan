@@ -24,7 +24,18 @@ ControlUnitDeviceSensor = fendt_caravan_ns.class_(
     sensor.Sensor,
     cg.Parented.template(FendtCaravan),
 )
-
+AldeDeviceSensor = fendt_caravan_ns.class_(
+    "AldeDeviceSensor",
+    CaravanDeviceComponent,
+    sensor.Sensor,
+    cg.Parented.template(FendtCaravan),
+)
+LightingDeviceSensor = fendt_caravan_ns.class_(
+    "LightingDeviceSensor",
+    CaravanDeviceComponent,
+    sensor.Sensor,
+    cg.Parented.template(FendtCaravan),
+)
 FendtSensor = fendt_caravan_ns.class_(
     "FendtSensor",
     sensor.Sensor,
@@ -89,6 +100,8 @@ CONFIG_SCHEMA = cv.typed_schema(
             device_class=DEVICE_CLASS_TEMPERATURE,
             key_name_="TEMP_OUT",
         ),
+        "alde_heater_device": _device_schema(AldeDeviceSensor),
+        "lighting_device": _device_schema(LightingDeviceSensor),
     }
 )
 

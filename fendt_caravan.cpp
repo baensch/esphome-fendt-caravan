@@ -139,6 +139,16 @@ void FendtCaravan::on_data_received_(const std::string &data) {
     if (result)
       return;
   }
+  if (this->alde_heater_device_ != nullptr) {
+    bool catched = this->alde_heater_device_->decode(key, value);
+    if (catched)
+      return;
+  }
+  if (this->lighting_device_ != nullptr) {
+    bool catched = this->lighting_device_->decode(key, value);
+    if (catched)
+      return;
+  }
 }
 
 void FendtCaravan::on_command_send(const std::string &command) {

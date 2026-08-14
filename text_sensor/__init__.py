@@ -38,6 +38,9 @@ CONFIG_SCHEMA = cv.typed_schema(
         "software_version": _text_schema(
             icon="mdi:application-braces-outline", key_name="SOFTWARE_VERSION"
         ),
+        "alde_available": _text_schema(
+            icon="mdi:air-filter", key_name="HEATER_AVAILABLE"
+        ),
     }
 )
 

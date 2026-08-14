@@ -29,6 +29,15 @@ CONFIG_SCHEMA = cv.typed_schema(
         "floor_heater": _switch_schema(
             icon="mdi:heat-wave", key_name_="FLOOR_HEATER_ON"
         ),
+        "alde_heater_gas": _switch_schema(
+            icon="mdi:water-boiler", key_name_="HEATER_GAS"
+        ),
+        "alde_heater": _switch_schema(icon="mdi:heat-wave", key_name_="HEATER_ONOFF"),
+        "alde_heater_water": _switch_schema(
+            icon="mdi:thermometer-water", key_name_="HEATER_WATER"
+        ),
+        "alde_heater_water_temperature": _switch_schema(key_name_="HEATER_WATER_TEMP"),
+        "light_switch_0": _switch_schema(icon="mdi:lamp", key_name_="LIGHT_SW0"),
     }
 )
 
