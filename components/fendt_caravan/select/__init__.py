@@ -30,7 +30,35 @@ CONFIG_SCHEMA = cv.typed_schema(
                     CONF_OPTIONS, default=["Off", "1 kW", "2 kW", "3 kW"]
                 ): cv.ensure_list(cv.string_strict)
             }
-        )
+        ),
+        "fridge_source": _select_schema(icon="mdi:power-cycle", key_name_="FRIDGE_SOURCE").extend(
+            {
+                cv.Optional(
+                    CONF_OPTIONS, default=["Auto", "230V", "12V", "Gas"]
+                ): cv.ensure_list(cv.string_strict)
+            }
+        ),
+        "fridge_temp": _select_schema(icon="mdi:snowflake", key_name_="FRIDGE_TEMP").extend(
+            {
+                cv.Optional(
+                    CONF_OPTIONS, default=["1", "2", "3", "4", "5"]
+                ): cv.ensure_list(cv.string_strict)
+            }
+        ),
+        "fridge_temperature": _select_schema(icon="mdi:snowflake", key_name_="FRIDGE_TEMP").extend(
+            {
+                cv.Optional(
+                    CONF_OPTIONS, default=["1", "2", "3", "4", "5"]
+                ): cv.ensure_list(cv.string_strict)
+            }
+        ),
+        "fridge_mode": _select_schema(icon="mdi:tune", key_name_="FRIDGE_MODE").extend(
+            {
+                cv.Optional(
+                    CONF_OPTIONS, default=["Normal", "Night"]
+                ): cv.ensure_list(cv.string_strict)
+            }
+        ),
     }
 )
 

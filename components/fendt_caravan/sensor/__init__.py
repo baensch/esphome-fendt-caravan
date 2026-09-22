@@ -43,6 +43,12 @@ TrumaDeviceSensor = fendt_caravan_ns.class_(
     sensor.Sensor,
     cg.Parented.template(FendtCaravan),
 )
+FridgeDeviceSensor = fendt_caravan_ns.class_(
+    "FridgeDeviceSensor",
+    CaravanDeviceComponent,
+    sensor.Sensor,
+    cg.Parented.template(FendtCaravan),
+)
 FendtSensor = fendt_caravan_ns.class_(
     "FendtSensor",
     sensor.Sensor,
@@ -120,6 +126,7 @@ CONFIG_SCHEMA = cv.typed_schema(
         "alde_heater_device": _device_schema(AldeDeviceSensor),
         "truma_heater_device": _device_schema(TrumaDeviceSensor),
         "lighting_device": _device_schema(LightingDeviceSensor),
+        "fridge_device": _device_schema(FridgeDeviceSensor),
     }
 )
 

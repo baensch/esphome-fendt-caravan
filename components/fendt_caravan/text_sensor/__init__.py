@@ -44,6 +44,9 @@ CONFIG_SCHEMA = cv.typed_schema(
         "truma_available": _text_schema(
             icon="mdi:radiator", key_name="TH_AVAILABLE"
         ),
+        "fridge_available": _text_schema(
+            icon="mdi:fridge-outline", key_name="FRIDGE_AVAILABLE"
+        ),
     }
 )
 

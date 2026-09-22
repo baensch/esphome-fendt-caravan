@@ -154,6 +154,11 @@ void FendtCaravan::on_data_received_(const std::string &data) {
     if (catched)
       return;
   }
+  if (this->fridge_device_ != nullptr) {
+    bool catched = this->fridge_device_->decode(key, value);
+    if (catched)
+      return;
+  }
 }
 
 void FendtCaravan::on_command_send(const std::string &command) {

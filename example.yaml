@@ -73,6 +73,12 @@ sensor:
     id: fendt_lighting
     parent_id: my_fendt_caravan
 
+  # Refrigerator Device
+  - platform: fendt_caravan
+    type: fridge_device
+    id: fendt_fridge
+    parent_id: my_fendt_caravan
+
 text_sensor:
   - platform: fendt_caravan
     type: power_status
@@ -88,6 +94,11 @@ text_sensor:
     type: alde_available
     name: "Alde Available"
     parent_id: fendt_alde
+
+  - platform: fendt_caravan
+    type: fridge_available
+    name: "Fridge Available"
+    parent_id: fendt_fridge
 
 switch:
   - platform: fendt_caravan
@@ -126,11 +137,26 @@ switch:
     name: "Alde Water Boost Temperature"
     parent_id: fendt_alde
 
+  - platform: fendt_caravan
+    type: fridge
+    name: "Fridge Power"
+    parent_id: fendt_fridge
+
 select:
   - platform: fendt_caravan
     type: alde_heater_electricity
     name: "Alde Heater Electricity"
     parent_id: fendt_alde
+
+  - platform: fendt_caravan
+    type: fridge_source
+    name: "Fridge Source"
+    parent_id: fendt_fridge
+
+  - platform: fendt_caravan
+    type: fridge_temp
+    name: "Fridge Intensity"
+    parent_id: fendt_fridge
 
 light:
   - platform: fendt_caravan

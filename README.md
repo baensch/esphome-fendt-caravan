@@ -181,7 +181,9 @@ The component models the caravan's CI-BUS network hierarchically:
 2. **Logical Devices (under `sensor:`)**: Physical / functional subsystems reporting telemetry:
    - `type: mcu_device` — Main Caravan Control Unit (MCU).
    - `type: alde_heater_device` — Alde heating controller (if caravan is equipped).
+   - `type: truma_heater_device` — Truma Combi heating and boiler controller.
    - `type: lighting_device` — Central lighting controller.
+   - `type: fridge_device` — CI-BUS Refrigerator controller.
    - Each device requires `parent_id` set to the `fendt_caravan` hub ID.
 
 3. **Sub-Entities (Sensors, Switches, Text Sensors, Selects, Lights, Climate)**:
@@ -205,6 +207,8 @@ The component models the caravan's CI-BUS network hierarchically:
   - `type: alde_heater_gas`: Alde gas operation toggle.
   - `type: alde_heater_water`: Alde hot water boost toggle.
   - `type: alde_heater_water_temperature`: Alde hot water temperature toggle.
+- Attached to `fridge_device`:
+  - `type: fridge`: Refrigerator power on/off switch (`cmd-tgl:FRIDGE_ON_OFF`).
 
 #### Text Sensors (`text_sensor:`)
 - Attached to `mcu_device`:
@@ -212,10 +216,16 @@ The component models the caravan's CI-BUS network hierarchically:
   - `type: software_version`: MCU firmware version.
 - Attached to `alde_heater_device`:
   - `type: alde_available`: Reports availability of Alde heating system.
+- Attached to `fridge_device`:
+  - `type: fridge_available`: Reports availability of CI-BUS refrigerator (`Available` / `Not available`).
 
 #### Select (`select:`)
 - Attached to `alde_heater_device`:
   - `type: alde_heater_electricity`: Electric heating power selector (`Off`, `1 kW`, `2 kW`, `3 kW`).
+- Attached to `fridge_device`:
+  - `type: fridge_source`: Energy source selector (`Auto`, `230V`, `12V`, `Gas`).
+  - `type: fridge_temp`: Cooling intensity level selector (`1` to `5`).
+  - `type: fridge_mode`: Refrigerator operating mode selector (`Normal`, `Night`).
 
 #### Lights (`light:`)
 Attached to `lighting_device`:

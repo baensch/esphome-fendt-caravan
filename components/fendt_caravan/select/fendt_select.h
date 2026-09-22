@@ -17,6 +17,9 @@ class FendtSelect : public CaravanComponentBase<std::string>, public select::Sel
     auto *variable = static_cast<Variable<std::string> *>(this->get_parent()->get_variable(this->key_name_));
     if (variable != nullptr) {
       this->set_variable(variable);
+      if (variable->is_active()) {
+        this->publish_state(variable->get_value());
+      }
     }
   }
 

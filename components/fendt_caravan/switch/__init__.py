@@ -40,6 +40,8 @@ CONFIG_SCHEMA = cv.typed_schema(
         "truma_heater": _switch_schema(icon="mdi:heat-wave", key_name_="TH_A_EN"),
         "truma_water_heater": _switch_schema(icon="mdi:water-boiler", key_name_="TH_W_EN"),
         "light_switch_0": _switch_schema(icon="mdi:lamp", key_name_="LIGHT_SW0"),
+        "fridge": _switch_schema(icon="mdi:fridge-outline", key_name_="FRIDGE_ON_OFF"),
+        "fridge_switch": _switch_schema(icon="mdi:fridge-outline", key_name_="FRIDGE_ON_OFF"),
     }
 )
 
