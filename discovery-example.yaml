@@ -1,0 +1,72 @@
+# Minimal BLE Discovery Firmware for Fendt / Hobby Caravan
+#
+# Use this configuration on an ESP32 to discover your Caravan's Bluetooth MAC address.
+# Helpful especially if you use an iPhone / iOS (where nRF Connect hides real hardware MAC addresses).
+#
+# Features:
+# - 10-second startup delay: logs begin after the device connects to Wi-Fi and you attach to logs.
+# - Cyclic re-scan (every 25s): clears seen cache to continuously re-print nearby devices.
+# - No connected BLE clients: 100% of radio time is dedicated to continuous scanning.
+
+esphome:
+  name: fendt-ble-discovery
+  on_boot:
+    priority: -100
+    then:
+      - delay: 10s
+      - lambda: |-
+          ESP_LOGI("ble_scan", "=================================================");
+          ESP_LOGI("ble_scan", " 10s startup delay passed. BLE Scanner is ACTIVE!");
+          ESP_LOGI("ble_scan", "=================================================");
+          id(scanner_active) = true;
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
+globals:
+  - id: scanner_active
+    type: bool
+    initial_value: 'false'
+
+logger:
+  level: DEBUG
+
+api:
+
+ota:
+  - platform: esphome
+
+wifi:
+  ssid: "YOUR_WIFI_SSID"
+  password: "YOUR_WIFI_PASSWORD"
+
+esp32_ble_tracker:
+  scan_parameters:
+    interval: 320ms
+    window: 300ms
+    active: true
+  on_ble_advertise:
+    - then:
+        - lambda: |-
+            if (!id(scanner_active)) return;
+            static std::set<std::string> seen;
+            static uint32_t last_reset = 0;
+            if (millis() - last_reset > 25000) {
+              seen.clear();
+              last_reset = millis();
+              ESP_LOGI("ble_scan", "--- [Cycle refresh: re-scanning visible devices] ---");
+            }
+            char buf[MAC_ADDRESS_PRETTY_BUFFER_SIZE];
+            std::string mac = x.address_str_to(buf);
+            if (seen.find(mac) == seen.end()) {
+              seen.insert(mac);
+              std::string uuids;
+              for (auto &u : x.get_service_uuids()) {
+                char ubuf[37];
+                uuids += std::string(u.to_str(ubuf)) + " ";
+              }
+              ESP_LOGI("ble_scan", "Device: %s | RSSI: %3d dBm | Name: '%s' | UUIDs: %s",
+                       mac.c_str(), x.get_rssi(), x.get_name().c_str(), uuids.c_str());
+            }

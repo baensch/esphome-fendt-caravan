@@ -41,6 +41,9 @@ CONFIG_SCHEMA = cv.typed_schema(
         "alde_available": _text_schema(
             icon="mdi:air-filter", key_name="HEATER_AVAILABLE"
         ),
+        "truma_available": _text_schema(
+            icon="mdi:radiator", key_name="TH_AVAILABLE"
+        ),
     }
 )
 

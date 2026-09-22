@@ -13,6 +13,13 @@ FendtClimate = fendt_caravan_ns.class_(
     cg.Parented.template(CaravanDeviceComponent),
 )
 
+TrumaClimate = fendt_caravan_ns.class_(
+    "TrumaClimate",
+    climate.Climate,
+    cg.Component,
+    cg.Parented.template(CaravanDeviceComponent),
+)
+
 CONF_OFF_ACTION = "off_action"
 CONF_HEATER_SWITCH = "heater_switch"
 
@@ -32,6 +39,18 @@ CONFIG_SCHEMA = cv.typed_schema(
                 cv.Optional(CONF_KEY_NAME, default="HEATER_TEMP"): cv.string,
             }
         ),
+        "truma_climate": climate.climate_schema(TrumaClimate).extend(
+            {
+                cv.Required(CONF_PARENT_ID): cv.use_id(CaravanDeviceComponent),
+                cv.Optional(CONF_SENSOR): cv.use_id(sensor.Sensor),
+            }
+        ),
+        "truma": climate.climate_schema(TrumaClimate).extend(
+            {
+                cv.Required(CONF_PARENT_ID): cv.use_id(CaravanDeviceComponent),
+                cv.Optional(CONF_SENSOR): cv.use_id(sensor.Sensor),
+            }
+        ),
     }
 )
 
@@ -41,10 +60,12 @@ async def to_code(config):
     var = await climate.new_climate(config)
     if CONF_KEY_NAME in config:
         cg.add(var.set_key_name(config[CONF_KEY_NAME]))
-    sens = await cg.get_variable(config[CONF_SENSOR])
-    cg.add(var.set_sensor(sens))
-    heater_switch = await cg.get_variable(config[CONF_HEATER_SWITCH])
-    cg.add(var.set_heater_switch(heater_switch))
+    if CONF_SENSOR in config:
+        sens = await cg.get_variable(config[CONF_SENSOR])
+        cg.add(var.set_sensor(sens))
+    if CONF_HEATER_SWITCH in config:
+        heater_switch = await cg.get_variable(config[CONF_HEATER_SWITCH])
+        cg.add(var.set_heater_switch(heater_switch))
     if CONF_HEAT_ACTION in config:
         await automation.build_automation(
             var.get_heat_action_trigger(), [], config[CONF_HEAT_ACTION]
@@ -56,3 +77,4 @@ async def to_code(config):
     await cg.register_component(var, config)
     await cg.register_parented(var, parent)
     cg.add(getattr(parent, f"set_{config[CONF_TYPE]}_climate")(var))
+

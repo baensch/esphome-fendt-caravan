@@ -2,7 +2,6 @@
 
 #ifdef USE_ESP32
 #include "esphome/core/component.h"
-#include "esphome/components/switch/switch.h"
 #include "esphome/core/string_ref.h"
 #include "variable.h"
 

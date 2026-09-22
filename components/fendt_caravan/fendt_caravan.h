@@ -34,6 +34,11 @@ class FendtCaravan : public Component, public ble_client::BLEClientNode {
     this->lighting_device_ = device_sensor;
     this->lighting_device_->set_command_send_callback([this](const std::string &cmd) { this->on_command_send(cmd); });
   }
+  void set_truma_heater_device_sensor(CaravanDeviceComponent *device_sensor) {
+    this->truma_heater_device_ = device_sensor;
+    this->truma_heater_device_->set_command_send_callback(
+        [this](const std::string &cmd) { this->on_command_send(cmd); });
+  }
   void dump_config() override;
   void on_command_send(const std::string &command);
 
@@ -53,6 +58,7 @@ class FendtCaravan : public Component, public ble_client::BLEClientNode {
   CaravanDeviceComponent *mcu_device_{nullptr};
   CaravanDeviceComponent *alde_heater_device_{nullptr};
   CaravanDeviceComponent *lighting_device_{nullptr};
+  CaravanDeviceComponent *truma_heater_device_{nullptr};
 };
 }  // namespace esphome::fendt_caravan
 #endif

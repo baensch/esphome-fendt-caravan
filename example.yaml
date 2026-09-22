@@ -1,0 +1,168 @@
+substitutions:
+  name: "fendt-caravan-controller"
+  friendly_name: "Fendt Caravan Controller"
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
+logger:
+  level: DEBUG
+
+external_components:
+  - source:
+      type: local
+      path: components
+    components: [ fendt_caravan ]
+
+esp32_ble_tracker:
+
+ble_client:
+  - mac_address: "C0:EE:FB:90:B0:A7"
+    id: fendt_ble_client
+
+fendt_caravan:
+  id: my_fendt_caravan
+  ble_client_id: fendt_ble_client
+
+sensor:
+  # MCU Control Unit Device
+  - platform: fendt_caravan
+    type: mcu_device
+    id: fendt_mcu
+    parent_id: my_fendt_caravan
+
+  # MCU Temperature Sensors
+  - platform: fendt_caravan
+    type: temp_in
+    id: inside_temperature
+    name: "Inside Temperature"
+    parent_id: fendt_mcu
+
+  - platform: fendt_caravan
+    type: temp_out
+    id: outside_temperature
+    name: "Outside Temperature"
+    parent_id: fendt_mcu
+
+  # Alde Heater Device
+  - platform: fendt_caravan
+    type: alde_heater_device
+    id: fendt_alde
+    parent_id: my_fendt_caravan
+
+  # Truma Heater Device
+  - platform: fendt_caravan
+    type: truma_heater_device
+    id: fendt_truma
+    parent_id: my_fendt_caravan
+
+  # Lighting Device Hub
+  - platform: fendt_caravan
+    type: lighting_device
+    id: fendt_lighting
+    parent_id: my_fendt_caravan
+
+text_sensor:
+  - platform: fendt_caravan
+    type: power_status
+    name: "Power Status"
+    parent_id: fendt_mcu
+
+  - platform: fendt_caravan
+    type: software_version
+    name: "Software Version"
+    parent_id: fendt_mcu
+
+  - platform: fendt_caravan
+    type: alde_available
+    name: "Alde Available"
+    parent_id: fendt_alde
+
+switch:
+  - platform: fendt_caravan
+    type: main_switch
+    name: "Main Switch"
+    parent_id: fendt_mcu
+
+  - platform: fendt_caravan
+    type: all_lights
+    name: "All Lights"
+    parent_id: fendt_mcu
+
+  - platform: fendt_caravan
+    type: floor_heater
+    name: "Floor Heater"
+    parent_id: fendt_mcu
+
+  - platform: fendt_caravan
+    type: alde_heater
+    id: alde_heater_switch
+    name: "Alde Heater"
+    parent_id: fendt_alde
+
+  - platform: fendt_caravan
+    type: alde_heater_gas
+    name: "Alde Heater Gas"
+    parent_id: fendt_alde
+
+  - platform: fendt_caravan
+    type: alde_heater_water
+    name: "Alde Heater Water"
+    parent_id: fendt_alde
+
+  - platform: fendt_caravan
+    type: alde_heater_water_temperature
+    name: "Alde Water Boost Temperature"
+    parent_id: fendt_alde
+
+select:
+  - platform: fendt_caravan
+    type: alde_heater_electricity
+    name: "Alde Heater Electricity"
+    parent_id: fendt_alde
+
+light:
+  - platform: fendt_caravan
+    type: light_sw0
+    name: "Light Switch 0"
+    parent_id: fendt_lighting
+
+  - platform: fendt_caravan
+    type: light_sw1
+    name: "Light Switch 1"
+    parent_id: fendt_lighting
+
+  - platform: fendt_caravan
+    type: light_dim0
+    name: "Light Dimmer 0"
+    parent_id: fendt_lighting
+
+climate:
+  - platform: fendt_caravan
+    type: alde_climate
+    name: "Alde Climate"
+    parent_id: fendt_alde
+    sensor: inside_temperature
+    heater_switch: alde_heater_switch
+
+  - platform: fendt_caravan
+    type: truma_climate
+    name: "Truma Climate"
+    parent_id: fendt_truma
+    sensor: inside_temperature
+
+button:
+  - platform: template
+    name: "Query Caravan Variables"
+    id: query_caravan_variables
+    icon: "mdi:bluetooth-audio"
+    on_press:
+      - lambda: |-
+          my_fendt_caravan->on_command_send("net-BT_VARS");
+

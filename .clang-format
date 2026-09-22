@@ -1,0 +1,14 @@
+BasedOnStyle: LLVM
+IndentWidth: 2
+AccessModifierOffset: -2
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+ColumnLimit: 120
+DerivePointerAlignment: false
+FixNamespaceComments: true
+IncludeBlocks: Regroup
+PointerAlignment: Left
+SpacesBeforeTrailingComments: 2
+Standard: Latest
+UseTab: Never
