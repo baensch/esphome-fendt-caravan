@@ -38,6 +38,7 @@ CONFIG_SCHEMA = cv.typed_schema(
         ),
         "alde_heater_water_temperature": _switch_schema(key_name_="HEATER_WATER_TEMP"),
         "truma_heater": _switch_schema(icon="mdi:heat-wave", key_name_="TH_A_EN"),
+        "truma_water_heater": _switch_schema(icon="mdi:water-boiler", key_name_="TH_W_EN"),
         "light_switch_0": _switch_schema(icon="mdi:lamp", key_name_="LIGHT_SW0"),
     }
 )

@@ -5,7 +5,7 @@ from esphome.const import CONF_ID
 
 CODEOWNERS = ["@rawsludge"]
 DEPENDENCIES = ["ble_client", "esp32_ble_tracker"]
-AUTO_LOAD = ["number", "select", "light", "switch", "text_sensor", "climate"]
+AUTO_LOAD = ["number", "select", "light", "switch", "text_sensor", "climate", "water_heater"]
 PLATFORMS = ["esp32"]
 
 MULTI_CONF = True

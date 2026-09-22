@@ -17,9 +17,14 @@ In addition to air heating, the Truma Combi unit heats domestic water for taps a
 * **Toggle Water Boiler**: `cmd-tgl:TH_W_EN`
 * **Set Water Target Temperature**: `cmd-set:TH_W_T=<temperature_or_level>`
 
-## Acceptance Criteria
-1. The component exposes a `water_heater` entity representing the domestic hot water circuit of the Truma Combi.
-2. The entity is conditioned on `TH_AVAILABLE: 1` and `TT_AVAILABLE: 1`.
-3. Toggling operation mode between `OFF` and active heating sends `cmd-tgl:TH_W_EN` according to current boiler state.
-4. Setting water target temperature updates `TH_W_T` using `cmd-set:TH_W_T=...`.
-5. State reflects incoming notifications for `TH_W_EN` and `TH_W_T`.
+## Status
+**Done** (tested and verified on hardware and Home Assistant).
+*Note: Further inspection on "power off" responsiveness will be conducted in a follow-up pass.*
+
+## Implementation Details
+* Added `TrumaWaterHeater` (`truma_water_heater` / `truma` under `water_heater:`) controlling domestic water heating.
+* Availability gated on both `TH_AVAILABLE: 1` and `TT_AVAILABLE: 1`.
+* Mode transitions mapped to boiler power toggle `cmd-tgl:TH_W_EN` and presets (Eco=40 °C, Performance=60 °C, High Demand=70 °C via `cmd-set:TH_W_T=<val>`).
+* Incoming notifications for `TH_W_EN` and `TH_W_T` dynamically update mode and target temperature.
+* Added optional `truma_water_heater` switch (`TH_W_EN`).
+

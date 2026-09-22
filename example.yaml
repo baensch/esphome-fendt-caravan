@@ -157,6 +157,12 @@ climate:
     parent_id: fendt_truma
     sensor: inside_temperature
 
+water_heater:
+  - platform: fendt_caravan
+    type: truma_water_heater
+    name: "Truma Water Heater"
+    parent_id: fendt_truma
+
 button:
   - platform: template
     name: "Query Caravan Variables"
@@ -165,4 +171,5 @@ button:
     on_press:
       - lambda: |-
           my_fendt_caravan->on_command_send("net-BT_VARS");
+
 
