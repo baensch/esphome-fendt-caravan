@@ -9,6 +9,7 @@
 #include "esphome/core/log.h"
 #include "device_decoders.h"
 #include "device_commands.h"
+#include <map>
 #include <vector>
 
 namespace esphome::fendt_caravan {
@@ -16,6 +17,7 @@ namespace esphome::fendt_caravan {
 class LightingDeviceSensor : public CaravanDeviceComponent, public sensor::Sensor, public Parented<FendtCaravan> {
  public:
   void setup() override;
+  void loop() override;
   void dump_config() override;
 
   void register_light_output(FendtLightOutput *light_output) {
@@ -27,6 +29,11 @@ class LightingDeviceSensor : public CaravanDeviceComponent, public sensor::Senso
 
  protected:
   std::vector<FendtLightOutput *> light_outputs_;
+  bool is_busy_{false};
+  uint32_t busy_timestamp_{0};
+  std::map<std::string, std::string> pending_commands_;
+
+  void flush_pending_commands_();
 
  private:
   Variable<uint8_t> *create_sw_variable_(const std::string &name);

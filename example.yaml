@@ -139,14 +139,20 @@ light:
     parent_id: fendt_lighting
 
   - platform: fendt_caravan
+    type: light_amb1
+    name: "Ambient 1 (Dimmable)"
+    dimmable: true
+    parent_id: fendt_lighting
+
+  - platform: fendt_caravan
     type: light_sw
     key_name: "LIGHT_WASCH"
     name: "Washroom Light"
     parent_id: fendt_lighting
 
   - platform: fendt_caravan
-    type: light_dim0
-    name: "Light Dimmer 0"
+    type: light_dim_decken
+    name: "Main Ceiling Dimmer"
     parent_id: fendt_lighting
 
 climate:

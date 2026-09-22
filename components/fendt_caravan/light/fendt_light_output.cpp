@@ -20,19 +20,53 @@ void FendtLightOutput::setup() {
 }
 
 void FendtLightOutput::write_state(light::LightState *state) {
+  if (this->key_name_.empty())
+    return;
+
+  bool cur_on = (this->variable_ != nullptr && this->variable_->get_value() != 0);
+  bool target_on = state->current_values.is_on();
   std::string command = "";
-  if (this->variable_ != nullptr) {
-    bool cur_state = this->variable_->get_value() != 0;
-    ESP_LOGD(TAG, "'%s' write_state: current=%s, target=%s", this->key_name_.c_str(),
-             ONOFF(cur_state), ONOFF(state->current_values.is_on()));
-    if (cur_state != state->current_values.is_on()) {
-      this->variable_->set_value(cur_state ^ 1);
-      command = this->variable_->get_command();
-    } else if (this->color_mode_ == light::ColorMode::BRIGHTNESS) {
-      this->variable_->set_value((uint8_t) (state->remote_values.get_brightness() * 15.0f));
-      command = this->variable_->get_alt_command();
+
+  if (this->color_mode_ == light::ColorMode::BRIGHTNESS) {
+    float brightness = state->remote_values.get_brightness();
+    uint8_t target_level = (uint8_t) std::round(brightness * 15.0f);
+
+    ESP_LOGD(TAG, "'%s' write_state dimmable: cur_on=%s (val=%d), target_on=%s, target_level=%d (b=%.2f)",
+             this->key_name_.c_str(), ONOFF(cur_on),
+             this->variable_ ? this->variable_->get_value() : -1,
+             ONOFF(target_on), target_level, brightness);
+
+    if (!target_on) {
+      if (cur_on) {
+        command = "cmd-tgl:" + this->key_name_;
+      }
+    } else {
+      if (target_level == 0) {
+        target_level = 1;
+      }
+      if (!cur_on) {
+        if (this->last_brightness_level_ > 0 && target_level == this->last_brightness_level_) {
+          command = "cmd-tgl:" + this->key_name_;
+        } else {
+          command = "cmd-set:" + this->key_name_ + "=" + std::to_string(target_level);
+          this->last_brightness_level_ = target_level;
+        }
+      } else {
+        uint8_t cur_level = this->variable_ ? this->variable_->get_value() : 0;
+        if (target_level != cur_level) {
+          command = "cmd-set:" + this->key_name_ + "=" + std::to_string(target_level);
+          this->last_brightness_level_ = target_level;
+        }
+      }
+    }
+  } else {
+    ESP_LOGD(TAG, "'%s' write_state binary: cur_on=%s, target_on=%s",
+             this->key_name_.c_str(), ONOFF(cur_on), ONOFF(target_on));
+    if (cur_on != target_on) {
+      command = "cmd-tgl:" + this->key_name_;
     }
   }
+
   if (!command.empty()) {
     ESP_LOGI(TAG, "'%s' sending command: %s", this->key_name_.c_str(), command.c_str());
     this->parent_->on_state_change_command(this->key_name_, command);
@@ -42,9 +76,12 @@ void FendtLightOutput::write_state(light::LightState *state) {
 void FendtLightOutput::on_decoded(const uint8_t &state) {
   ESP_LOGD(TAG, "'%s' on_decoded value: %d", this->key_name_.c_str(), state);
   this->is_discovered_ = true;
+  if (state > 0) {
+    this->last_brightness_level_ = state;
+  }
   if (this->light_state_ != nullptr) {
     this->light_state_->remote_values.set_state(state != 0);
-    if (this->color_mode_ == light::ColorMode::BRIGHTNESS) {
+    if (this->color_mode_ == light::ColorMode::BRIGHTNESS && state > 0) {
       this->light_state_->remote_values.set_brightness((float) (state) / 15.0f);
     }
     this->light_state_->publish_state();

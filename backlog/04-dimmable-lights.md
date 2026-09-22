@@ -1,5 +1,7 @@
 # Story 04: Dimmable Light Channels (0–15 Range)
 
+**Status**: Done
+
 ## Target Device Type & Platform
 * **Platform**: ESPHome `light`
 * **Entity Type**: Dimmable Light (`light::ColorMode::BRIGHTNESS`)

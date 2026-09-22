@@ -236,11 +236,37 @@ Each `LIGHT_<CIRCUIT>` key corresponds directly to a physical lighting zone wire
 
 ##### Configuring Lights in YAML
 
-You can configure your caravan lights in two easy ways:
+You can configure each light in your caravan as either a **switched (binary on/off)** light or a **dimmable (brightness slider)** light.
 
-###### 1. Built-in Shortcut Types (Recommended)
-For the most common circuits found in Fendt and Hobby caravans, pre-configured shortcuts are available so you don't have to remember the CI-BUS key:
+###### 1. Deciding Between Switched and Dimmable (`dimmable: true / false`)
 
+Depending on your caravan's factory equipment and options, certain circuits (like ambient LED strips or main ceiling lights) may be dimmable or simply switched.
+
+You have full control on configuration level:
+- Add `dimmable: true` to **any** light entity to expose it as a dimmable light with a brightness slider (0–15 scale in CI-BUS, mapped smoothly to 0–100% in Home Assistant).
+- Leave `dimmable: false` (or omit) to expose it as a crisp binary on/off switch.
+
+```yaml
+light:
+  # Switched circuit (binary on/off):
+  - platform: fendt_caravan
+    type: light_kueche
+    name: "Caravan Kitchen Light"
+    parent_id: lighting_device
+
+  # Make any semantic circuit dimmable with dimmable: true!
+  - platform: fendt_caravan
+    type: light_amb1
+    name: "Caravan Ambient 1 (Dimmable)"
+    dimmable: true
+    parent_id: lighting_device
+```
+
+###### 2. Built-in Semantic Shortcut Types
+
+For the most common circuits found in Fendt and Hobby caravans, pre-configured shortcuts are available:
+
+**Switched Circuits (`dimmable: false` by default, can set `dimmable: true`):**
 | Type | Circuit / Location | CI-BUS Key | Typical Description |
 |---|---|---|---|
 | `light_aussen` | Awning / Exterior | `LIGHT_AUSSEN` | Vorzeltleuchte / Exterior door light |
@@ -254,40 +280,40 @@ For the most common circuits found in Fendt and Hobby caravans, pre-configured s
 | `light_zusatzl` | Spot Left | `LIGHT_ZUSATZL` | Left reading light or auxiliary spot |
 | `light_zusatzr` | Spot Right | `LIGHT_ZUSATZR` | Right reading light or auxiliary spot |
 
-###### 2. Generic Semantic Switch (`light_sw`)
-If your caravan floor plan has unique circuits (such as `LIGHT_BETT`, `LIGHT_KINDER`, or layout-specific accent zones revealed in your boot logs), use `type: light_sw` with `key_name`:
+**Semantic Dimmers (`dimmable: true` by default):**
+| Type | Circuit / Location | CI-BUS Key | Typical Description |
+|---|---|---|---|
+| `light_dim_decken` | Ceiling / Main | `LIGHT_DIM0` | Main ceiling dimmer channel |
+| `light_dim_amb1` | Ambient Zone 1 | `LIGHT_DIM1` | Dinette / ceiling ambient dimmer |
+| `light_dim_amb2` | Ambient Zone 2 | `LIGHT_DIM2` | Seating accent dimmer |
+| `light_dim_amb3` | Ambient Zone 3 | `LIGHT_DIM3` | Bedroom accent dimmer |
+| `light_dim_bett` | Bed / Reading | `LIGHT_DIM4` | Reading / bed zone dimmer |
 
+*(Legacy channels `light_dim0` through `light_dim4` remain supported as direct channel index aliases).*
+
+###### 3. Generic Switched and Dimmable Types
+
+For custom circuits discovered in your caravan logs (such as `LIGHT_BETT` or `LIGHT_KINDER`):
 ```yaml
 light:
-  # Shortcut type:
-  - platform: fendt_caravan
-    type: light_aussen
-    name: "Caravan Awning Light"
-    parent_id: lighting_device
-
-  # Another shortcut type:
-  - platform: fendt_caravan
-    type: light_kueche
-    name: "Caravan Kitchen Light"
-    parent_id: lighting_device
-
-  # Generic semantic switch with any discovered CI-BUS key:
+  # Generic switched binary light:
   - platform: fendt_caravan
     type: light_sw
     key_name: "LIGHT_BETT"
     name: "Caravan Bed Light"
     parent_id: lighting_device
-```
 
-###### Dimmable Channels (`light_dim0` .. `light_dim4` or `light_dim`)
-For dimmable ambient channels (brightness 0–100% mapped to CI-BUS steps 0–15):
-
-```yaml
+  # Generic dimmable light (with brightness slider):
   - platform: fendt_caravan
-    type: light_dim0
-    name: "Caravan Main Ceiling Dimmer"
+    type: light_dim
+    key_name: "LIGHT_DIM0"
+    name: "Caravan Custom Dimmer"
     parent_id: lighting_device
 ```
+
+##### Smooth Hardware Fading & `LIGHT_BUSY` Synchronization
+
+The Toptron lighting controller performs smooth hardware transitions internally and broadcasts `LIGHT_BUSY:1` while fading. The ESPHome component automatically buffers and coalesces rapid slider movements during fading, dispatching your final target level the moment the controller reports `LIGHT_BUSY:0`. This prevents command race conditions and erratic flickering.
 
 > [!NOTE]
 > Physical wall switches and the caravan's central touch panel remain fully functional. When a light is switched on or off physically in the caravan, its state updates immediately in Home Assistant.

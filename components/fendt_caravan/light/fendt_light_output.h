@@ -24,11 +24,16 @@ class FendtLightOutput : public light::LightOutput, public CaravanComponentBase<
   const std::string &get_key_name() const { return this->key_name_; }
   bool is_discovered() const { return this->is_discovered_; }
   void set_discovered(bool discovered) { this->is_discovered_ = discovered; }
+  void set_dimmable(bool dimmable) {
+    this->color_mode_ = dimmable ? light::ColorMode::BRIGHTNESS : light::ColorMode::ON_OFF;
+  }
+  bool is_dimmable() const { return this->color_mode_ == light::ColorMode::BRIGHTNESS; }
 
  protected:
   void on_decoded(const uint8_t &value) override;
   light::LightState *light_state_{nullptr};
   bool is_discovered_{false};
+  uint8_t last_brightness_level_{15};
 
  private:
   light::ColorMode color_mode_ = light::ColorMode::ON_OFF;
