@@ -2,60 +2,90 @@
 
 #ifdef USE_ESP32
 namespace esphome::fendt_caravan {
-static const char *const TAG = "FC.lights";
+static const char *const TAG = "fc.lighting_device";
 
 void LightingDeviceSensor::setup() {
-  if (this->light_sw0_ != nullptr) {
-    auto *light_sw0 = new Variable<int>("LIGHT_SW0", DeviceDecoders::decode_int, Commands::update_toggle<bool>);
-    this->add_variable(light_sw0);
-  }
+  for (auto *light_output : this->light_outputs_) {
+    const std::string &key_name = light_output->get_key_name();
+    if (key_name.empty())
+      continue;
 
-  if (this->light_sw1_ != nullptr) {
-    auto *light_sw1 = new Variable<int>("LIGHT_SW1", DeviceDecoders::decode_int, Commands::update_toggle<bool>);
-    this->add_variable(light_sw1);
-  }
-
-  if (this->light_sw2_ != nullptr) {
-    auto *light_sw2 = new Variable<int>("LIGHT_SW2", DeviceDecoders::decode_int, Commands::update_toggle<bool>);
-    this->add_variable(light_sw2);
-  }
-
-  if (this->light_sw3_ != nullptr) {
-    auto *light_sw3 = new Variable<int>("LIGHT_SW3", DeviceDecoders::decode_int, Commands::update_toggle<bool>);
-    this->add_variable(light_sw3);
-  }
-
-  if (this->light_dim0_ != nullptr) {
-    auto *light_dim0 = this->create_variable_("LIGHT_DIM0");
-    this->add_variable(light_dim0);
-  }
-
-  if (this->light_dim1_ != nullptr) {
-    auto *light_dim1 = this->create_variable_("LIGHT_DIM1");
-    this->add_variable(light_dim1);
-  }
-
-  if (this->light_dim2_ != nullptr) {
-    auto *light_dim2 = this->create_variable_("LIGHT_DIM2");
-    this->add_variable(light_dim2);
-  }
-  if (this->light_dim3_ != nullptr) {
-    auto *light_dim3 = this->create_variable_("LIGHT_DIM3");
-    this->add_variable(light_dim3);
-  }
-  if (this->light_dim4_ != nullptr) {
-    auto *light_dim4 = this->create_variable_("LIGHT_DIM4");
-    this->add_variable(light_dim4);
+    if (this->get_variable(key_name) == nullptr) {
+      if (key_name.rfind("LIGHT_DIM", 0) == 0) {
+        auto *var = this->create_dim_variable_(key_name);
+        this->add_variable(var);
+      } else {
+        auto *var = this->create_sw_variable_(key_name);
+        this->add_variable(var);
+      }
+    }
   }
 }
 
-void LightingDeviceSensor::dump_config() { ESP_LOGCONFIG(TAG, "-Fendt Lighting Device-"); }
+void LightingDeviceSensor::dump_config() {
+  ESP_LOGCONFIG(TAG, "-Fendt Lighting Device-");
+  ESP_LOGCONFIG(TAG, "  Configured Light Outputs: %zu", this->light_outputs_.size());
+  for (auto *light_output : this->light_outputs_) {
+    ESP_LOGCONFIG(TAG, "    Light Key: %s (discovered: %s)",
+                  light_output->get_key_name().c_str(),
+                  light_output->is_discovered() ? "yes" : "no");
+  }
+}
+
+bool LightingDeviceSensor::decode(const std::string &name, const std::string &value) {
+  auto *variable = this->get_variable(name);
+  if (variable == nullptr && name.rfind("LIGHT_", 0) == 0) {
+    ESP_LOGI(TAG, "Dynamically discovered light variable: %s", name.c_str());
+    if (name.rfind("LIGHT_DIM", 0) == 0) {
+      variable = this->create_dim_variable_(name);
+    } else {
+      variable = this->create_sw_variable_(name);
+    }
+    this->add_variable(variable);
+
+    for (auto *output : this->light_outputs_) {
+      if (output->get_key_name() == name) {
+        output->set_variable(static_cast<Variable<uint8_t> *>(variable));
+      }
+    }
+  }
+
+  if (variable != nullptr) {
+    variable->decode(value);
+    this->on_data_decoded(variable);
+    return true;
+  }
+  return false;
+}
 
 void LightingDeviceSensor::on_state_change_command(const std::string &tag, const std::string &command) {
   if (!command.empty()) {
-    ESP_LOGD(TAG, "Switch state changed command:%s", command.c_str());
+    ESP_LOGD(TAG, "Light state change command: %s", command.c_str());
     this->command_callback_.call(command);
   }
+}
+
+Variable<uint8_t> *LightingDeviceSensor::create_sw_variable_(const std::string &name) {
+  return new Variable<uint8_t>(
+      name,
+      [](const std::string &data) {
+        int val = DeviceDecoders::decode_int(data);
+        return (uint8_t) (val != 0 ? 1 : 0);
+      },
+      Commands::update_toggle<uint8_t>);
+}
+
+Variable<uint8_t> *LightingDeviceSensor::create_dim_variable_(const std::string &name) {
+  return new Variable<uint8_t>(
+      name,
+      [](const std::string &data) {
+        int val = DeviceDecoders::decode_int(data);
+        return (uint8_t) val;
+      },
+      Commands::update_toggle<uint8_t>,
+      [](const std::string &name, uint8_t state) {
+        return Commands::update_int(name, state);
+      });
 }
 }  // namespace esphome::fendt_caravan
 #endif

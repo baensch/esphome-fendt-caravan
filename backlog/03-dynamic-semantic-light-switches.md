@@ -1,5 +1,7 @@
 # Story 03: Dynamic Semantic Light Switches & Availability Discovery
 
+**Status**: Done
+
 ## Target Device Type & Platform
 * **Platform**: ESPHome `light`
 * **Entity Type**: Binary Light (`light::ColorMode::ON_OFF`)

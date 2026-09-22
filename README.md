@@ -85,16 +85,19 @@ button:
    [D][fendt_caravan:100]: Notified value: UBAT:13,2 V
    [D][fendt_caravan:100]: Notified value: TEMP_IN:20,5^C
    [D][fendt_caravan:100]: Notified value: TEMP_OUT:14,0^C
-   [D][fendt_caravan:100]: Notified value: LIGHT_SW0:0
-   [D][fendt_caravan:100]: Notified value: LIGHT_SW1:1
+   [D][fendt_caravan:100]: Notified value: LIGHT_AUSSEN:0
+   [D][fendt_caravan:100]: Notified value: LIGHT_KUECHE:0
+   [D][fendt_caravan:100]: Notified value: LIGHT_WASCH:0
+   [D][fendt_caravan:100]: Notified value: LIGHT_AMB1:0
    [D][fendt_caravan:100]: Notified value: LIGHT_DIM0:75
    [D][fendt_caravan:100]: Notified value: FLOOR_HEATER_ON:0
-   [D][fendt_caravan:100]: Notified value: HEATER_AVAILABLE:0
+   [D][fendt_caravan:100]: Notified value: TH_AVAILABLE:1
    ```
 4. Map the discovered variables into your configuration:
-   - `LIGHT_SW0` .. `LIGHT_SW3` → add corresponding `light_sw0` .. `light_sw3` under `light:`.
+   - `LIGHT_<NAME>` (e.g. `LIGHT_AUSSEN`, `LIGHT_KUECHE`, `LIGHT_WASCH`, etc.) → add corresponding `light_aussen`, `light_kueche`, or generic `light_sw` with `key_name: LIGHT_<NAME>` under `light:`.
    - `LIGHT_DIM0` .. `LIGHT_DIM4` → add corresponding `light_dim0` .. `light_dim4` under `light:`.
    - `FLOOR_HEATER_ON` → add `floor_heater` under `switch:`.
+   - `TH_AVAILABLE: 1` / `TH_A_EN` → caravan is equipped with a Truma Combi heating system (`truma_heater_device` under `sensor:`, `truma_climate` under `climate:`, and `truma_water_heater` under `water_heater:`).
    - `HEATER_AVAILABLE: 1` / `HEATER_ONOFF` → caravan is equipped with an Alde heating system (`alde_heater_device`).
 
 ## Fendt Caravan Configuration
@@ -201,8 +204,6 @@ The component models the caravan's CI-BUS network hierarchically:
   - `type: alde_heater_gas`: Alde gas operation toggle.
   - `type: alde_heater_water`: Alde hot water boost toggle.
   - `type: alde_heater_water_temperature`: Alde hot water temperature toggle.
-- Attached to `lighting_device`:
-  - `type: light_switch_0`: Discrete light circuit switch.
 
 #### Text Sensors (`text_sensor:`)
 - Attached to `mcu_device`:
@@ -216,11 +217,88 @@ The component models the caravan's CI-BUS network hierarchically:
   - `type: alde_heater_electricity`: Electric heating power selector (`Off`, `1 kW`, `2 kW`, `3 kW`).
 
 #### Lights (`light:`)
-- Attached to `lighting_device`:
-  - Binary light channels: `type: light_sw0`, `light_sw1`, `light_sw2`, `light_sw3`.
-  - Dimmable channels: `type: light_dim0`, `light_dim1`, `light_dim2`, `light_dim3`, `light_dim4`.
+Attached to `lighting_device`:
+
+Modern European caravans (Fendt, Hobby, etc.) powered by Toptron CI-BUS systems do not use arbitrary numbers (like "switch 1" or "light 2") for lights. Instead, every circuit has a meaningful **semantic name** corresponding to its physical installation in the vehicle.
+
+##### How Light Names Work in CI-BUS
+
+The caravan's central electrical module broadcasts its available lighting circuits over Bluetooth. In your ESPHome log output during startup, you will see lines discovering the active circuits in your caravan:
+
+```text
+[lighting_device_sensor]: Discovered dynamic light key: LIGHT_AUSSEN
+[lighting_device_sensor]: Discovered dynamic light key: LIGHT_KUECHE
+[lighting_device_sensor]: Discovered dynamic light key: LIGHT_WASCH
+[lighting_device_sensor]: Discovered dynamic light key: LIGHT_AMB1
+```
+
+Each `LIGHT_<CIRCUIT>` key corresponds directly to a physical lighting zone wired to the caravan controller.
+
+##### Configuring Lights in YAML
+
+You can configure your caravan lights in two easy ways:
+
+###### 1. Built-in Shortcut Types (Recommended)
+For the most common circuits found in Fendt and Hobby caravans, pre-configured shortcuts are available so you don't have to remember the CI-BUS key:
+
+| Type | Circuit / Location | CI-BUS Key | Typical Description |
+|---|---|---|---|
+| `light_aussen` | Awning / Exterior | `LIGHT_AUSSEN` | Vorzeltleuchte / Exterior door light |
+| `light_kueche` | Kitchen Main | `LIGHT_KUECHE` | Primary kitchen counter fixture |
+| `light_kueche2` | Kitchen Secondary | `LIGHT_KUECHE2` | Kitchen cabinet or range hood light |
+| `light_wasch` | Washroom | `LIGHT_WASCH` | Bathroom ceiling light |
+| `light_dusche` | Shower | `LIGHT_DUSCHE` | Dedicated shower stall light |
+| `light_amb1` | Ambient Zone 1 | `LIGHT_AMB1` | Ceiling ambient LED strip |
+| `light_amb2` | Ambient Zone 2 | `LIGHT_AMB2` | Seating area / dinette ambient light |
+| `light_amb3` | Ambient Zone 3 | `LIGHT_AMB3` | Bedroom or entrance accent light |
+| `light_zusatzl` | Spot Left | `LIGHT_ZUSATZL` | Left reading light or auxiliary spot |
+| `light_zusatzr` | Spot Right | `LIGHT_ZUSATZR` | Right reading light or auxiliary spot |
+
+###### 2. Generic Semantic Switch (`light_sw`)
+If your caravan floor plan has unique circuits (such as `LIGHT_BETT`, `LIGHT_KINDER`, or layout-specific accent zones revealed in your boot logs), use `type: light_sw` with `key_name`:
+
+```yaml
+light:
+  # Shortcut type:
+  - platform: fendt_caravan
+    type: light_aussen
+    name: "Caravan Awning Light"
+    parent_id: lighting_device
+
+  # Another shortcut type:
+  - platform: fendt_caravan
+    type: light_kueche
+    name: "Caravan Kitchen Light"
+    parent_id: lighting_device
+
+  # Generic semantic switch with any discovered CI-BUS key:
+  - platform: fendt_caravan
+    type: light_sw
+    key_name: "LIGHT_BETT"
+    name: "Caravan Bed Light"
+    parent_id: lighting_device
+```
+
+###### Dimmable Channels (`light_dim0` .. `light_dim4` or `light_dim`)
+For dimmable ambient channels (brightness 0–100% mapped to CI-BUS steps 0–15):
+
+```yaml
+  - platform: fendt_caravan
+    type: light_dim0
+    name: "Caravan Main Ceiling Dimmer"
+    parent_id: lighting_device
+```
+
+> [!NOTE]
+> Physical wall switches and the caravan's central touch panel remain fully functional. When a light is switched on or off physically in the caravan, its state updates immediately in Home Assistant.
+
+#### Water Heaters (`water_heater:`)
+- Attached to `truma_heater_device`:
+  - `type: truma_water_heater` / `type: truma`: Domestic hot water boiler control for Truma Combi systems (Off, Eco / 40 °C, Performance / 60 °C, High Demand / 70 °C).
 
 #### Climate (`climate:`)
+- Attached to `truma_heater_device`:
+  - `type: truma_climate` / `type: truma`: Truma Combi space / air heating climate control.
 - Attached to `alde_heater_device`:
   - `type: alde_climate`: Exposes Alde heating as an ESPHome climate device. Requires `sensor` and `heater_switch`.
 

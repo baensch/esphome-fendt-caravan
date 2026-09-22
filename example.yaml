@@ -129,13 +129,19 @@ select:
 
 light:
   - platform: fendt_caravan
-    type: light_sw0
-    name: "Light Switch 0"
+    type: light_aussen
+    name: "Awning Light"
     parent_id: fendt_lighting
 
   - platform: fendt_caravan
-    type: light_sw1
-    name: "Light Switch 1"
+    type: light_kueche
+    name: "Kitchen Light"
+    parent_id: fendt_lighting
+
+  - platform: fendt_caravan
+    type: light_sw
+    key_name: "LIGHT_WASCH"
+    name: "Washroom Light"
     parent_id: fendt_lighting
 
   - platform: fendt_caravan

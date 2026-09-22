@@ -21,9 +21,14 @@ class FendtLightOutput : public light::LightOutput, public CaravanComponentBase<
   void write_state(light::LightState *state) override;
   void setup_state(light::LightState *state) override { this->light_state_ = state; }
 
+  const std::string &get_key_name() const { return this->key_name_; }
+  bool is_discovered() const { return this->is_discovered_; }
+  void set_discovered(bool discovered) { this->is_discovered_ = discovered; }
+
  protected:
   void on_decoded(const uint8_t &value) override;
   light::LightState *light_state_{nullptr};
+  bool is_discovered_{false};
 
  private:
   light::ColorMode color_mode_ = light::ColorMode::ON_OFF;
