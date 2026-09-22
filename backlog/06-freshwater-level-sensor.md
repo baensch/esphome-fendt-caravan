@@ -1,5 +1,7 @@
 # Story 06: Freshwater Tank Level Sensor
 
+**Status**: Done
+
 ## Target Device Type & Platform
 * **Platform**: ESPHome `sensor`
 * **Entity Type**: Percentage Sensor (`device_class: water_level`, `unit_of_measurement: "%"`, `state_class: measurement`, icon `mdi:water-percent`)

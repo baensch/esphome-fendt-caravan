@@ -193,6 +193,7 @@ The component models the caravan's CI-BUS network hierarchically:
 - Attached to `mcu_device`:
   - `type: temp_in`: Inside temperature (°C).
   - `type: temp_out`: Outside temperature (°C).
+  - `type: water_level`: Freshwater tank fill level (0–100%).
 
 #### Switches (`switch:`)
 - Attached to `mcu_device`:

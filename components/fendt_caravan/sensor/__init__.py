@@ -7,6 +7,7 @@ from esphome.const import (
     ENTITY_CATEGORY_DIAGNOSTIC,
     STATE_CLASS_MEASUREMENT,
     UNIT_CELSIUS,
+    UNIT_PERCENT,
 )
 from esphome.cpp_generator import MockObjClass
 
@@ -69,6 +70,7 @@ def _sensor_schema(
     accuracy_decimals: int = cv.UNDEFINED,
     device_class: str = cv.UNDEFINED,
     state_class: str = cv.UNDEFINED,
+    icon: str = cv.UNDEFINED,
     key_name_: str = cv.UNDEFINED,
 ) -> cv.Schema:
     return (
@@ -78,6 +80,7 @@ def _sensor_schema(
             accuracy_decimals=accuracy_decimals,
             device_class=device_class,
             state_class=state_class,
+            icon=icon,
         ).extend(
             {
                 cv.Required(CONF_PARENT_ID): cv.use_id(CaravanDeviceComponent),
@@ -105,6 +108,14 @@ CONFIG_SCHEMA = cv.typed_schema(
             state_class=STATE_CLASS_MEASUREMENT,
             device_class=DEVICE_CLASS_TEMPERATURE,
             key_name_="TEMP_OUT",
+        ),
+        "water_level": _sensor_schema(
+            FendtSensor,
+            unit_of_measurement=UNIT_PERCENT,
+            accuracy_decimals=0,
+            state_class=STATE_CLASS_MEASUREMENT,
+            icon="mdi:water-percent",
+            key_name_="WATER_LEVEL",
         ),
         "alde_heater_device": _device_schema(AldeDeviceSensor),
         "truma_heater_device": _device_schema(TrumaDeviceSensor),

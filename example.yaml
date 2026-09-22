@@ -50,6 +50,11 @@ sensor:
     name: "Outside Temperature"
     parent_id: fendt_mcu
 
+  - platform: fendt_caravan
+    type: water_level
+    name: "Freshwater Level"
+    parent_id: fendt_mcu
+
   # Alde Heater Device
   - platform: fendt_caravan
     type: alde_heater_device

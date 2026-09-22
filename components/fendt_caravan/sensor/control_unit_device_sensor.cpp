@@ -87,6 +87,14 @@ void ControlUnitDeviceSensor::setup() {
 
   auto *radio_config = new Variable<bool>("RADIO_CONFIG", DeviceDecoders::decode_bool);
   this->add_variable(radio_config);
+
+  auto *water_level = new Variable<float>("WATER_LEVEL", [](const std::string &value) {
+    return (float) DeviceDecoders::decode_int(value);
+  });
+  this->add_variable(water_level);
+
+  auto *water_measurement = new Variable<int>("WATER_MEASUREMENT", DeviceDecoders::decode_int);
+  this->add_variable(water_measurement);
 }
 
 void ControlUnitDeviceSensor::dump_config() {
@@ -95,6 +103,7 @@ void ControlUnitDeviceSensor::dump_config() {
   LOG_SWITCH(TAG, "  All Lights Status", this->all_lights_switch_);
   LOG_SENSOR(TAG, "  Temp In", this->temp_in_sensor_);
   LOG_SENSOR(TAG, "  Temp Out", this->temp_out_sensor_);
+  LOG_SENSOR(TAG, "  Water Level", this->water_level_sensor_);
   LOG_TEXT_SENSOR(TAG, "  Power Status", this->power_status_text_sensor_);
   LOG_TEXT_SENSOR(TAG, "  Software Version", this->software_version_text_sensor_);
   LOG_SWITCH(TAG, "  Floor Heater", this->floor_heater_switch_);
