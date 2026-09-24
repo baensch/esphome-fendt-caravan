@@ -26,11 +26,11 @@ void FridgeDeviceSensor::setup() {
           case 0:
             return "Auto";
           case 1:
-            return "230V";
+            return "Gas";
           case 2:
             return "12V";
           case 3:
-            return "Gas";
+            return "230V";
           default:
             return value;
         }
@@ -39,11 +39,11 @@ void FridgeDeviceSensor::setup() {
         std::string val_str = "0";
         if (value == "Auto" || value == "auto" || value == "0") {
           val_str = "0";
-        } else if (value == "230V" || value == "240V" || value == "230 V" || value == "240 V" || value == "1") {
+        } else if (value == "Gas" || value == "gas" || value == "1") {
           val_str = "1";
         } else if (value == "12V" || value == "12 V" || value == "2") {
           val_str = "2";
-        } else if (value == "Gas" || value == "gas" || value == "3") {
+        } else if (value == "230V" || value == "240V" || value == "230 V" || value == "240 V" || value == "3") {
           val_str = "3";
         } else {
           val_str = value;
