@@ -1,65 +1,125 @@
 ---
-description: "Fendt Caravan component allows ESP32 devices to connect to the Bluetooth Low Energy (BLE) interface of Fendt and Hobby (most probably) caravans."
-title: "Fendt Caravan"
+description: "Fendt & Hobby Caravan ESPHome Component allows ESP32 devices to connect to the Toptron CI-BUS BLE interface for full local Home Assistant integration."
+title: "Fendt & Hobby Caravan"
 params:
   seo:
-    description: Fendt Caravan component allows ESP32 devices to connect to the Bluetooth Low Energy (BLE) interface of Fendt and Hobby (most probably) caravans.
+    description: Fendt & Hobby Caravan component allows ESP32 devices to connect to the Bluetooth Low Energy (BLE) interface of Fendt and Hobby caravans for native Home Assistant control.
     image: fendt_caravan.svg
 ---
 
-The **Fendt Caravan** component allows ESP32 devices to connect to the Bluetooth Low Energy (BLE) interface of **Fendt** and **Hobby** caravans and exposes the same data and controls that are available in the *Fendt Connect* mobile application directly to **Home Assistant** using ESPHome.
+The **Fendt Caravan** component allows ESP32 microcontrollers to communicate directly with the central **Toptron CI-BUS** Bluetooth Low Energy (BLE) module installed in modern **Fendt** and **Hobby** caravans. It replaces proprietary mobile applications (*Fendt Connect*, *Hobby Connect*) with **100% local, bidirectional Home Assistant control and telemetry** via ESPHome.
 
-This enables fully local control and monitoring of caravan systems such as heating, fridge, lighting, temperature sensors, and power status without relying on the official mobile application or any cloud services.
+```
+┌─────────────────────────┐               BLE               ┌──────────────────────────┐
+│   Caravan CI-BUS MCU    │ ◄─────────────────────────────► │       ESP32 Board        │
+│ (Toptron Central Unit)  │   net-BT_VARS / cmd-tgl / set   │   (fendt_caravan comp.)  │
+└─────────────────────────┘                                 └────────────┬─────────────┘
+                                                                         │ Wi-Fi / API
+                                                            ┌────────────▼─────────────┐
+                                                            │      Home Assistant      │
+                                                            │ (Climate, Water Heater,  │
+                                                            │  Lights, Fridge, Power)  │
+                                                            └──────────────────────────┘
+```
 
-::: warning
-This component is **experimental**. The configuration, exposed entities, and behavior may change in future ESPHome releases.
+::: note
+**Purpose of this Document**: This document serves as the master technical specification and usage guide for the `fendt_caravan` component. It is structured into:
+1. **Quickstart (Basics in 5 Minutes)**
+2. **Discovery Guide (Finding Your MAC & Discovering Supported Peripherals)**
+3. **Full Reference Configuration**
+4. **Subsystem & Entity Deep-Dive**
+5. **Hardware PCB Wiring & Mapping Guide**
 :::
 
-{{< img src="fendt_caravan_ui.png" alt="Image" >}}
+---
 
-{{< anchor "config-fendt-caravan" >}}
+## 1. Quickstart: Basic Configuration in 5 Minutes
 
-## Prerequisites
+For users who want to get an ESP32 connected and reporting basic interior/exterior temperatures and power status immediately:
 
-To use the **Fendt Caravan** component, the `esp32_ble_tracker` and `ble_client` components must be added to the YAML configuration file. For the `ble_client` component, the specified `mac_address` must be the MAC address of the Caravan.
+```yaml
+esphome:
+  name: caravan-controller
 
-- ESP32 device with BLE support
-- Caravan with **Fendt / Hobby BLE interface** powered on
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
 
-### Finding Your Caravan's Bluetooth MAC Address
+external_components:
+  - source:
+      type: local
+      path: components
+    components: [fendt_caravan]
 
-1. **Android / PC**: You can scan using the **nRF Connect** app to find the hardware MAC address.
-2. **iPhone (iOS)**: CoreBluetooth on iOS masks real hardware MAC addresses with randomized per-device UUIDs, making it impossible to see the real MAC address directly on an iPhone.
-3. **Using an ESP32 for Discovery**:
-   A dedicated [**`discovery-example.yaml`**](discovery-example.yaml) configuration is provided in this repository. It runs continuous BLE scanning with:
-   * **10-Second Startup Delay**: Gives you time to connect to `esphome logs` before discovery output begins.
-   * **Cyclic Re-Scan (every 25s)**: Periodically refreshes discovered devices so visible devices are re-printed continuously.
-   * **Dedicated Radio Time**: Disables all connected BLE clients to maximize scan throughput.
+esp32_ble_tracker:
 
-   Run it on your ESP32:
-   ```bash
-   esphome run discovery-example.yaml
-   esphome logs discovery-example.yaml
-   ```
+ble_client:
+  - mac_address: "DE:00:24:50:64:61"   # Replace with your caravan's Bluetooth MAC
+    id: caravan_ble
+    auto_connect: true
 
-   Look for log lines like:
-   ```text
-   [I][ble_scan]: Device: DE:00:24:50:64:61 | RSSI: -77 dBm | Name: 'MyHobby Data' | UUIDs: EAFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFF0
-   ```
-   * **Common Names**: `MyHobby Data`, `Hobby Connect`, `Fendt`, `CI-BUS`, or model codes.
-   * **Common MAC Prefixes**: Frequently starts with `DE:00:XX:...`.
+fendt_caravan:
+  id: my_caravan
+  ble_client_id: caravan_ble
 
-### Discovering Available Features & Variables (Querying the Caravan)
+sensor:
+  # Register the primary Main Control Unit (MCU)
+  - platform: fendt_caravan
+    type: mcu_device
+    id: caravan_mcu
+    parent_id: my_caravan
 
-Different caravan models and trim levels have different peripherals installed (e.g. discrete light switches, dimmers, underfloor heating, Alde vs. Truma heaters, battery monitors).
+  # Interior Temperature
+  - platform: fendt_caravan
+    type: temp_in
+    name: "Caravan Inside Temperature"
+    parent_id: caravan_mcu
 
-The caravan control unit supports the `net-BT_VARS` protocol command, which instructs the caravan to dump its entire variable table and current values via BLE notifications.
+  # Exterior Temperature
+  - platform: fendt_caravan
+    type: temp_out
+    name: "Caravan Outside Temperature"
+    parent_id: caravan_mcu
 
-#### Why Variables Might Not Appear Automatically in Logs
-The ESPHome component automatically sends `net-BT_VARS` during initial Bluetooth service discovery right after boot (~5 seconds after power-on). Because attaching to `esphome logs` typically takes 20–30 seconds after a reboot, this initial burst is usually missed. Once complete, the caravan only notifies live sensors whose values actively change (like outside temperature).
+switch:
+  # Master 12V caravan switch
+  - platform: fendt_caravan
+    type: main_switch
+    name: "Caravan Main Switch"
+    parent_id: caravan_mcu
 
-#### Adding a Query Button
-You can trigger a fresh dump at any time while streaming logs by exposing a template button:
+binary_sensor:
+  # 230V Shore Power connection
+  - platform: fendt_caravan
+    type: shore_power
+    name: "Caravan Shore Power"
+    parent_id: caravan_mcu
+```
+
+---
+
+## 2. Discovery Guide: Determining What Your Caravan Supports
+
+Because every caravan model year and layout (e.g., Fendt Bianco/Diamant, Hobby De Luxe/Prestige/Maxia) features different factory equipment, you must identify:
+1. Your caravan's BLE MAC address.
+2. Which CI-BUS variables your specific vehicle broadcasts.
+
+### Step 1: Discovering the Bluetooth MAC Address
+- **Android / PC**: Open the **nRF Connect** app, scan for nearby devices, and locate the device broadcasting as `MyHobby Data`, `Hobby Connect`, `Fendt`, or with MAC prefix `DE:00:XX:...`.
+- **Apple iOS**: iOS masks physical Bluetooth MAC addresses with randomized per-device UUIDs. If using an iPhone, run the provided [`discovery-example.yaml`](discovery-example.yaml) on an ESP32:
+  ```bash
+  esphome run discovery-example.yaml
+  esphome logs discovery-example.yaml
+  ```
+  Watch the log for:
+  ```text
+  [I][ble_scan]: Device: DE:00:24:50:64:61 | RSSI: -75 dBm | Name: 'MyHobby Data'
+  ```
+
+### Step 2: Querying the CI-BUS Variable Table (`net-BT_VARS`)
+When the caravan MCU connects over BLE, it broadcasts its complete variable dictionary in response to `net-BT_VARS`. 
+Because attaching to `esphome logs` typically takes 20–30 seconds after boot (causing you to miss the initial startup burst), add a **Query Button** to trigger a dump on demand:
 
 ```yaml
 button:
@@ -72,39 +132,57 @@ button:
           my_caravan->on_command_send("net-BT_VARS");
 ```
 
-#### How to Inspect Discovered Variables
-1. Stream logs from your device:
-   ```bash
-   esphome logs config.yaml
-   ```
-2. Press the **Query Caravan Variables** button (from Home Assistant or the ESPHome web dashboard).
-3. The caravan will output all supported variables:
-   ```text
-   [D][fendt_caravan:100]: Notified value: HS_KEY_STATE:1
-   [D][fendt_caravan:100]: Notified value: LINE_EN:Connected
-   [D][fendt_caravan:100]: Notified value: UBAT:13,2 V
-   [D][fendt_caravan:100]: Notified value: TEMP_IN:20,5^C
-   [D][fendt_caravan:100]: Notified value: TEMP_OUT:14,0^C
-   [D][fendt_caravan:100]: Notified value: LIGHT_AUSSEN:0
-   [D][fendt_caravan:100]: Notified value: LIGHT_KUECHE:0
-   [D][fendt_caravan:100]: Notified value: LIGHT_WASCH:0
-   [D][fendt_caravan:100]: Notified value: LIGHT_AMB1:0
-   [D][fendt_caravan:100]: Notified value: LIGHT_DIM0:75
-   [D][fendt_caravan:100]: Notified value: FLOOR_HEATER_ON:0
-   [D][fendt_caravan:100]: Notified value: TH_AVAILABLE:1
-   ```
-4. Map the discovered variables into your configuration:
-   - `LIGHT_<NAME>` (e.g. `LIGHT_AUSSEN`, `LIGHT_KUECHE`, `LIGHT_WASCH`, etc.) → add corresponding `light_aussen`, `light_kueche`, or generic `light_sw` with `key_name: LIGHT_<NAME>` under `light:`.
-   - `LIGHT_DIM0` .. `LIGHT_DIM4` → add corresponding `light_dim0` .. `light_dim4` under `light:`.
-   - `FLOOR_HEATER_ON` → add `floor_heater` under `switch:`.
-   - `TH_AVAILABLE: 1` / `TH_A_EN` → caravan is equipped with a Truma Combi heating system (`truma_heater_device` under `sensor:`, `truma_climate` under `climate:`, and `truma_water_heater` under `water_heater:`).
-   - `HEATER_AVAILABLE: 1` / `HEATER_ONOFF` → caravan is equipped with an Alde heating system (`alde_heater_device`).
+1. Run `esphome logs config.yaml`.
+2. Press **Query Caravan Variables** from Home Assistant or the ESPHome web interface.
+3. Observe lines matching `[D][fendt_caravan:100]: Notified value: <KEY>:<VAL>`.
 
-## Fendt Caravan Configuration
+### Step 3: CI-BUS Variable Mapping (The "Rosetta Stone")
 
-Add the component via `external_components` pointing to the `components` directory:
+Use this reference table to match discovered CI-BUS variables to their corresponding ESPHome platform, parent device, and entity type:
+
+| CI-BUS Key | Example Log Value | Recommended Platform | Device Parent | Entity `type:` | Description |
+|---|---|---|---|---|---|
+| `TEMP_IN` | `21,5^C` | `sensor:` | `mcu_device` | `temp_in` | Inside ambient temperature (°C) |
+| `TEMP_OUT` | `14,0^C` | `sensor:` | `mcu_device` | `temp_out` | Outside temperature (°C) |
+| `WATER_LEVEL` | `75` | `sensor:` | `mcu_device` | `water_level` | Freshwater tank fill level (0–100%) |
+| `LINE_EN` | `1` / `Connected` | `binary_sensor:` | `mcu_device` | `shore_power` | 230V mains connected (`device_class: plug`) |
+| `D_PLUS` | `0` / `1` | `binary_sensor:` | `mcu_device` | `d_plus` | Tow vehicle engine running / alternator |
+| `HS_KEY_STATE` | `1` | `switch:` | `mcu_device` | `main_switch` | Caravan 12V master power toggle |
+| `ALL_LIGHTS` | `1` | `switch:` | `mcu_device` | `all_lights` | Master toggle for all interior lights |
+| `FLOOR_HEATER_ON`| `0` / `1` | `switch:` | `mcu_device` | `floor_heater` | 230V underfloor electric heating |
+| `SOFTWARE_VERSION`| `V010700` | `text_sensor:` | `mcu_device` | `software_version`| Caravan MCU firmware version |
+| `TH_AVAILABLE` | `1` | `binary_sensor:` | `truma_heater_device` | `truma_available` | Truma Combi heater installed flag |
+| `TH_A_EN` / `TH_A_T` | `1` / `21` | `climate:` | `truma_heater_device` | `truma_climate` | Truma Combi space heating climate control |
+| `TH_W_EN` / `TH_W_T` | `1` / `40` | `water_heater:` | `truma_heater_device` | `truma_water_heater`| Truma Combi domestic hot water boiler |
+| `FRIDGE_AVAILABLE`| `1` | `binary_sensor:` | `fridge_device` | `fridge_available` | Smart CI-BUS refrigerator installed flag |
+| `FRIDGE_ON_OFF` | `1` | `switch:` | `fridge_device` | `fridge` | Refrigerator power on/off toggle |
+| `FRIDGE_SOURCE` | `0`..`3` | `select:` | `fridge_device` | `fridge_source` | Energy selector (Auto=0, Gas=1, 12V=2, 230V=3) |
+| `FRIDGE_TEMP` | `1`..`5` | `select:` | `fridge_device` | `fridge_temp` | Cooling intensity level (1–5) |
+| `FRIDGE_MODE` | `0` / `1` | `select:` | `fridge_device` | `fridge_mode` | Mode (Normal=0, Night=1) |
+| `HEATER_AVAILABLE`| `1` | `binary_sensor:` | `alde_heater_device` | `alde_available` | Alde heating installed flag |
+| `HEATER_ONOFF` | `1` | `climate:` / `switch:` | `alde_heater_device` | `alde_climate` / `alde_heater` | Alde central hydronic heating |
+| `LIGHT_AUSSEN` | `0` / `1` | `light:` | `lighting_device` | `light_aussen` | Awning / exterior porch light |
+| `LIGHT_KUECHE` | `0` / `1` | `light:` | `lighting_device` | `light_kueche` | Kitchen main light |
+| `LIGHT_WASCH` | `0` / `1` | `light:` | `lighting_device` | `light_wasch` | Bathroom / washbasin light |
+| `LIGHT_DUSCHE` | `0` / `1` | `light:` | `lighting_device` | `light_dusche` | Toilet room / shower stall light |
+| `LIGHT_AMB1`..`3` | `0` / `1` | `light:` | `lighting_device` | `light_amb1`..`3` | Ambient lighting circuits |
+| `LIGHT_DIM0`..`4` | `0`..`15` | `light:` | `lighting_device` | `light_dim_decken`, etc. | Dimmable PWM channels (0–15 scale) |
+
+---
+
+## 3. Full Reference Configuration
+
+Below is a complete, production-ready `esphome` configuration incorporating every supported platform and logical device hub:
 
 ```yaml
+esphome:
+  name: caravan-controller
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
 external_components:
   - source:
       type: local
@@ -114,254 +192,254 @@ external_components:
 esp32_ble_tracker:
 
 ble_client:
-  - mac_address: !secret fendt_mac
-    id: my_ble_client
+  - mac_address: !secret caravan_mac
+    id: caravan_ble
     auto_connect: true
 
 fendt_caravan:
   id: my_caravan
-  ble_client_id: my_ble_client
+  ble_client_id: caravan_ble
 
+button:
+  - platform: template
+    name: "Query Caravan Variables"
+    id: query_caravan_variables
+    icon: "mdi:bluetooth-audio"
+    on_press:
+      - lambda: |-
+          my_caravan->on_command_send("net-BT_VARS");
+
+# ==============================================================================
+# LOGICAL DEVICE HUBS
+# ==============================================================================
 sensor:
-  # 1. Register the parent logical device(s)
+  # 1. Main Caravan Control Unit (MCU)
   - platform: fendt_caravan
-    id: mcu_device
-    parent_id: my_caravan
     type: mcu_device
+    id: hub_mcu
+    parent_id: my_caravan
 
-  # 2. Register sensors attached to the device
+  # 2. Central Lighting Controller Hub
   - platform: fendt_caravan
-    id: caravan_inside_temp
-    name: "Caravan Inside Temperature"
-    parent_id: mcu_device
+    type: lighting_device
+    id: hub_lighting
+    parent_id: my_caravan
+
+  # 3. Smart Refrigerator Hub
+  - platform: fendt_caravan
+    type: fridge_device
+    id: hub_fridge
+    parent_id: my_caravan
+
+  # 4. Truma Combi Heating Hub
+  - platform: fendt_caravan
+    type: truma_heater_device
+    id: hub_truma
+    parent_id: my_caravan
+
+  # --- MCU Sensors ---
+  - platform: fendt_caravan
     type: temp_in
+    name: "Caravan Inside Temperature"
+    id: caravan_temp_in
+    parent_id: hub_mcu
 
   - platform: fendt_caravan
-    id: caravan_outside_temp
-    name: "Caravan Outside Temperature"
-    parent_id: mcu_device
     type: temp_out
+    name: "Caravan Outside Temperature"
+    parent_id: hub_mcu
 
+  - platform: fendt_caravan
+    type: water_level
+    name: "Caravan Freshwater Tank"
+    parent_id: hub_mcu
+
+# ==============================================================================
+# BINARY SENSORS (Shore Power, Tow Vehicle, Availability)
+# ==============================================================================
+binary_sensor:
+  - platform: fendt_caravan
+    type: shore_power
+    name: "Caravan Shore Power"
+    parent_id: hub_mcu
+
+  - platform: fendt_caravan
+    type: d_plus
+    name: "Caravan Tow Vehicle Connected"
+    parent_id: hub_mcu
+
+  - platform: fendt_caravan
+    type: truma_available
+    name: "Caravan Truma Available"
+    parent_id: hub_truma
+
+  - platform: fendt_caravan
+    type: fridge_available
+    name: "Caravan Refrigerator Available"
+    parent_id: hub_fridge
+
+# ==============================================================================
+# SWITCHES (Master Switch, All Lights, Underfloor Heating, Fridge Power)
+# ==============================================================================
 switch:
   - platform: fendt_caravan
-    name: "Main Switch"
-    parent_id: mcu_device
     type: main_switch
+    name: "Caravan Main Switch"
+    parent_id: hub_mcu
 
   - platform: fendt_caravan
-    name: "All Lights"
-    parent_id: mcu_device
     type: all_lights
+    name: "Caravan All Lights"
+    parent_id: hub_mcu
 
   - platform: fendt_caravan
-    name: "Floor Heater"
-    parent_id: mcu_device
     type: floor_heater
-
-text_sensor:
-  - platform: fendt_caravan
-    name: "Power Status"
-    parent_id: mcu_device
-    type: power_status
+    name: "Caravan Underfloor Heating"
+    parent_id: hub_mcu
 
   - platform: fendt_caravan
-    name: "Software Version"
-    parent_id: mcu_device
-    type: software_version
-```
+    type: fridge
+    name: "Caravan Refrigerator Power"
+    parent_id: hub_fridge
 
-### Component Architecture & Hierarchy
+# ==============================================================================
+# REFRIGERATOR CONTROLS (Energy Source, Intensity, Mode)
+# ==============================================================================
+select:
+  - platform: fendt_caravan
+    type: fridge_source
+    name: "Caravan Refrigerator Source"
+    parent_id: hub_fridge
 
-The component models the caravan's CI-BUS network hierarchically:
+  - platform: fendt_caravan
+    type: fridge_temp
+    name: "Caravan Refrigerator Intensity"
+    parent_id: hub_fridge
 
-1. **`fendt_caravan` (Hub)**: Manages the BLE communication session via `ble_client`.
-   - **`id`** (**Required**, [ID](/guides/configuration-types#id)): Identifier for the caravan hub.
-   - **`ble_client_id`** (**Required**, [ID](/guides/configuration-types#id)): The ID of the configured `ble_client`.
+  - platform: fendt_caravan
+    type: fridge_mode
+    name: "Caravan Refrigerator Mode"
+    parent_id: hub_fridge
 
-2. **Logical Devices (under `sensor:`)**: Physical / functional subsystems reporting telemetry:
-   - `type: mcu_device` — Main Caravan Control Unit (MCU).
-   - `type: alde_heater_device` — Alde heating controller (if caravan is equipped).
-   - `type: truma_heater_device` — Truma Combi heating and boiler controller.
-   - `type: lighting_device` — Central lighting controller.
-   - `type: fridge_device` — CI-BUS Refrigerator controller.
-   - Each device requires `parent_id` set to the `fendt_caravan` hub ID.
-
-3. **Sub-Entities (Sensors, Switches, Text Sensors, Selects, Lights, Climate)**:
-   - Each entity requires `parent_id` pointing to its corresponding logical device (e.g., `mcu_device` or `alde_heater_device`).
-
-### Available Platforms & Types
-
-#### Sensors (`sensor:`)
-- Attached to `mcu_device`:
-  - `type: temp_in`: Inside temperature (°C).
-  - `type: temp_out`: Outside temperature (°C).
-  - `type: water_level`: Freshwater tank fill level (0–100%).
-
-#### Switches (`switch:`)
-- Attached to `mcu_device`:
-  - `type: main_switch`: Caravan main power toggle.
-  - `type: all_lights`: Master toggle for caravan lights.
-  - `type: floor_heater`: Underfloor heating toggle.
-- Attached to `alde_heater_device`:
-  - `type: alde_heater`: Alde heater main toggle.
-  - `type: alde_heater_gas`: Alde gas operation toggle.
-  - `type: alde_heater_water`: Alde hot water boost toggle.
-  - `type: alde_heater_water_temperature`: Alde hot water temperature toggle.
-- Attached to `fridge_device`:
-  - `type: fridge`: Refrigerator power on/off switch (`cmd-tgl:FRIDGE_ON_OFF`).
-
-#### Binary Sensors (`binary_sensor:`)
-- Attached to `mcu_device`:
-  - `type: shore_power` (alias: `line_en`): 230V mains shore power connection status (`device_class: plug`, `LINE_EN`).
-  - `type: d_plus`: Alternator / tow vehicle engine running signal (`device_class: power`, `D_PLUS`).
-- Attached to `truma_heater_device`:
-  - `type: truma_available`: Truma Combi heater installation status (`entity_category: diagnostic`, `TH_AVAILABLE`).
-- Attached to `fridge_device`:
-  - `type: fridge_available`: CI-BUS smart refrigerator installation status (`entity_category: diagnostic`, `FRIDGE_AVAILABLE`).
-- Attached to `alde_heater_device`:
-  - `type: alde_available`: Alde heating system installation status (`entity_category: diagnostic`, `HEATER_AVAILABLE`).
-- Generic:
-  - `type: generic` or `type: binary_sensor`: Monitor any arbitrary CI-BUS boolean variable with custom `key_name`.
-
-#### Text Sensors (`text_sensor:`)
-- Attached to `mcu_device`:
-  - `type: power_status`: Caravan mains / battery power status.
-  - `type: software_version`: MCU firmware version.
-- Attached to `alde_heater_device`:
-  - `type: alde_available`: Reports availability of Alde heating system.
-- Attached to `fridge_device`:
-  - `type: fridge_available`: Reports availability of CI-BUS refrigerator (`Available` / `Not available`).
-
-#### Select (`select:`)
-- Attached to `alde_heater_device`:
-  - `type: alde_heater_electricity`: Electric heating power selector (`Off`, `1 kW`, `2 kW`, `3 kW`).
-- Attached to `fridge_device`:
-  - `type: fridge_source`: Energy source selector (`Auto`, `230V`, `12V`, `Gas`).
-  - `type: fridge_temp`: Cooling intensity level selector (`1` to `5`).
-  - `type: fridge_mode`: Refrigerator operating mode selector (`Normal`, `Night`).
-
-#### Lights (`light:`)
-Attached to `lighting_device`:
-
-Modern European caravans (Fendt, Hobby, etc.) powered by Toptron CI-BUS systems do not use arbitrary numbers (like "switch 1" or "light 2") for lights. Instead, every circuit has a meaningful **semantic name** corresponding to its physical installation in the vehicle.
-
-##### How Light Names Work in CI-BUS
-
-The caravan's central electrical module broadcasts its available lighting circuits over Bluetooth. In your ESPHome log output during startup, you will see lines discovering the active circuits in your caravan:
-
-```text
-[lighting_device_sensor]: Discovered dynamic light key: LIGHT_AUSSEN
-[lighting_device_sensor]: Discovered dynamic light key: LIGHT_KUECHE
-[lighting_device_sensor]: Discovered dynamic light key: LIGHT_WASCH
-[lighting_device_sensor]: Discovered dynamic light key: LIGHT_AMB1
-```
-
-Each `LIGHT_<CIRCUIT>` key corresponds directly to a physical lighting zone wired to the caravan controller.
-
-##### Configuring Lights in YAML
-
-You can configure each light in your caravan as either a **switched (binary on/off)** light or a **dimmable (brightness slider)** light.
-
-###### 1. Deciding Between Switched and Dimmable (`dimmable: true / false`)
-
-Depending on your caravan's factory equipment and options, certain circuits (like ambient LED strips or main ceiling lights) may be dimmable or simply switched.
-
-You have full control on configuration level:
-- Add `dimmable: true` to **any** light entity to expose it as a dimmable light with a brightness slider (0–15 scale in CI-BUS, mapped smoothly to 0–100% in Home Assistant).
-- Leave `dimmable: false` (or omit) to expose it as a crisp binary on/off switch.
-
-```yaml
+# ==============================================================================
+# LIGHTING CIRCUITS (Switched & Dimmable)
+# ==============================================================================
 light:
-  # Switched circuit (binary on/off):
+  # Switched Circuits (Binary on/off)
+  - platform: fendt_caravan
+    type: light_aussen
+    name: "Caravan Vorzeltleuchte"
+    parent_id: hub_lighting
+
   - platform: fendt_caravan
     type: light_kueche
-    name: "Caravan Kitchen Light"
-    parent_id: lighting_device
+    name: "Caravan Küche"
+    parent_id: hub_lighting
 
-  # Make any semantic circuit dimmable with dimmable: true!
   - platform: fendt_caravan
-    type: light_amb1
-    name: "Caravan Ambient 1 (Dimmable)"
-    dimmable: true
-    parent_id: lighting_device
+    type: light_wasch
+    name: "Caravan Waschraum"
+    parent_id: hub_lighting
+
+  - platform: fendt_caravan
+    type: light_dusche
+    name: "Caravan Toilette"
+    parent_id: hub_lighting
+
+  # Dimmable Circuits (PWM brightness slider 0-100%)
+  - platform: fendt_caravan
+    type: light_dim_decken
+    name: "Caravan Elternbett Links"
+    parent_id: hub_lighting
+
+  - platform: fendt_caravan
+    type: light_dim_amb1
+    name: "Caravan Elternbett Rechts"
+    parent_id: hub_lighting
+
+  - platform: fendt_caravan
+    type: light_dim_amb2
+    name: "Caravan Deckenleuchte Sitzgruppe"
+    parent_id: hub_lighting
+
+  - platform: fendt_caravan
+    type: light_dim_amb3
+    name: "Caravan Leselampen Sitzgruppe"
+    parent_id: hub_lighting
+
+# ==============================================================================
+# CLIMATE & WATER HEATING (Truma Combi)
+# ==============================================================================
+climate:
+  - platform: fendt_caravan
+    type: truma_climate
+    name: "Caravan Heater"
+    parent_id: hub_truma
+    sensor_id: caravan_temp_in
+
+water_heater:
+  - platform: fendt_caravan
+    type: truma_water_heater
+    name: "Caravan Hot Water Boiler"
+    parent_id: hub_truma
+
+# ==============================================================================
+# DIAGNOSTICS & SYSTEM INFO
+# ==============================================================================
+text_sensor:
+  - platform: fendt_caravan
+    type: software_version
+    name: "Caravan Software Version"
+    parent_id: hub_mcu
 ```
 
-###### 2. Built-in Semantic Shortcut Types
+---
 
-For the most common circuits found in Fendt and Hobby caravans, pre-configured shortcuts are available:
+## 4. Subsystem Deep-Dive
 
-**Switched Circuits (`dimmable: false` by default, can set `dimmable: true`):**
-| Type | Circuit / Location | CI-BUS Key | Typical Description |
-|---|---|---|---|
-| `light_aussen` | Awning / Exterior | `LIGHT_AUSSEN` | Vorzeltleuchte / Exterior door light |
-| `light_kueche` | Kitchen Main | `LIGHT_KUECHE` | Primary kitchen counter fixture |
-| `light_kueche2` | Kitchen Secondary | `LIGHT_KUECHE2` | Kitchen cabinet or range hood light |
-| `light_wasch` | Washroom | `LIGHT_WASCH` | Bathroom ceiling light |
-| `light_dusche` | Shower | `LIGHT_DUSCHE` | Dedicated shower stall light |
-| `light_amb1` | Ambient Zone 1 | `LIGHT_AMB1` | Ceiling ambient LED strip |
-| `light_amb2` | Ambient Zone 2 | `LIGHT_AMB2` | Seating area / dinette ambient light |
-| `light_amb3` | Ambient Zone 3 | `LIGHT_AMB3` | Bedroom or entrance accent light |
-| `light_zusatzl` | Spot Left | `LIGHT_ZUSATZL` | Left reading light or auxiliary spot |
-| `light_zusatzr` | Spot Right | `LIGHT_ZUSATZR` | Right reading light or auxiliary spot |
+### 4.1 Refrigerator Control
+- **`fridge` (`switch:`)**: Direct power on/off control sending `cmd-tgl:FRIDGE_ON_OFF`.
+- **`fridge_source` (`select:`)**: Energy selector with correct CI-BUS integer mapping:
+  - `Auto` (`0`): Automatic Energy Selection (AES) mode.
+  - `Gas` (`1`): LPG burner operation.
+  - `12V` (`2`): 12V DC operation (from tow vehicle alternator or onboard battery).
+  - `230V` (`3`): 230V AC mains shore power operation.
+- **`fridge_temp` (`select:`)**: Cooling intensity level from `1` (lowest) to `5` (coldest).
+- **`fridge_mode` (`select:`)**: Operating profile (`Normal` / `Night` quiet mode).
+- **`fridge_available` (`binary_sensor:`)**: Indicates whether a CI-BUS compatible refrigerator is installed and responding.
 
-**Semantic Dimmers (`dimmable: true` by default):**
-| Type | Circuit / Location | CI-BUS Key | Typical Description |
-|---|---|---|---|
-| `light_dim_decken` | Ceiling / Main | `LIGHT_DIM0` | Main ceiling dimmer channel |
-| `light_dim_amb1` | Ambient Zone 1 | `LIGHT_DIM1` | Dinette / ceiling ambient dimmer |
-| `light_dim_amb2` | Ambient Zone 2 | `LIGHT_DIM2` | Seating accent dimmer |
-| `light_dim_amb3` | Ambient Zone 3 | `LIGHT_DIM3` | Bedroom accent dimmer |
-| `light_dim_bett` | Bed / Reading | `LIGHT_DIM4` | Reading / bed zone dimmer |
+### 4.2 Lighting Subsystem
+- **Switched vs. Dimmable Flexibility**: Any light can be made dimmable by adding `dimmable: true` or converted to a strict binary toggle with `dimmable: false`.
+- **Hardware Transition Queueing (`LIGHT_BUSY`)**: Toptron controllers perform hardware fading and report `LIGHT_BUSY:1` while transitioning. The component automatically coalesces and queues rapid slider adjustments, flushing the final level when `LIGHT_BUSY:0` is reported.
+- **Reliable Binary State Tracking**: Evaluates target commands from Home Assistant's `remote_values` directly, guaranteeing that turn-off commands always transmit without toggle phase inversion.
+- **Separately-Lit Toilet & Candidate Circuits**:
+  Caravans with separate washrooms and toilet cubicles wire the toilet light to `LIGHT_DUSCHE` (`type: light_dusche` or alias `type: light_toilette`). Other candidate circuits supported include `light_kinder` (`LIGHT_KINDER`), `light_bett_sw` (`LIGHT_BETT`), and `light_sw0` .. `light_sw3`.
 
-*(Legacy channels `light_dim0` through `light_dim4` remain supported as direct channel index aliases).*
+### 4.3 Truma Combi Heating & Domestic Hot Water
+- **`truma_climate` (`climate:`)**: Controls cabin air heating. Supports `OFF` and `HEAT` modes, integer target temperatures (5 °C – 30 °C), and automatically reflects live ambient conditions by linking `sensor_id` to `temp_in`.
+- **`truma_water_heater` (`water_heater:`)**: Native Home Assistant water heater entity. Supports:
+  - `OFF`: Boiler disabled.
+  - `ECO`: Target 40 °C.
+  - `PERFORMANCE`: Target 60 °C.
+  - `HIGH_DEMAND`: Target 70 °C (anti-legionella boost).
+- **Availability Guard**: Both climate and water heater entities remain safely unavailable until the caravan MCU confirms `TH_AVAILABLE: 1` and `TT_AVAILABLE: 1`.
 
-###### 3. Generic Switched and Dimmable Types
+### 4.4 Fresh Water & Power Telemetry
+- **`water_level` (`sensor:`)**: Reports freshwater tank level as a clean percentage (`0`–`100%`) with `state_class: measurement` and `icon: "mdi:water-percent"`.
+- **`shore_power` (`binary_sensor:`)**: Natively reports whether 230V shore power is connected (`device_class: plug`).
+- **`d_plus` (`binary_sensor:`)**: Reports the 12V `D+` engine-running alternator line from the towing vehicle (`device_class: power`).
 
-For custom circuits discovered in your caravan logs (such as `LIGHT_BETT` or `LIGHT_KINDER`):
-```yaml
-light:
-  # Generic switched binary light:
-  - platform: fendt_caravan
-    type: light_sw
-    key_name: "LIGHT_BETT"
-    name: "Caravan Bed Light"
-    parent_id: lighting_device
+---
 
-  # Generic dimmable light (with brightness slider):
-  - platform: fendt_caravan
-    type: light_dim
-    key_name: "LIGHT_DIM0"
-    name: "Caravan Custom Dimmer"
-    parent_id: lighting_device
-```
+## 5. Hardware PCB Wiring & Mapping Guide
 
-##### Smooth Hardware Fading & `LIGHT_BUSY` Synchronization
+In Hobby and Fendt caravans, factory assembly lines often connect interior lamps to different PCB relay and dimmer terminals than the static firmware names suggest (e.g., `LIGHT_DIM0` labeled "Deckenleuchte" might physically illuminate the parents' bed, and `LIGHT_DUSCHE` might control the toilet room).
 
-The Toptron lighting controller performs smooth hardware transitions internally and broadcasts `LIGHT_BUSY:1` while fading. The ESPHome component automatically buffers and coalesces rapid slider movements during fading, dispatching your final target level the moment the controller reports `LIGHT_BUSY:0`. This prevents command race conditions and erratic flickering.
-
-> [!NOTE]
-> Physical wall switches and the caravan's central touch panel remain fully functional. When a light is switched on or off physically in the caravan, its state updates immediately in Home Assistant.
-
-#### Water Heaters (`water_heater:`)
-- Attached to `truma_heater_device`:
-  - `type: truma_water_heater` / `type: truma`: Domestic hot water boiler control for Truma Combi systems (Off, Eco / 40 °C, Performance / 60 °C, High Demand / 70 °C).
-
-#### Climate (`climate:`)
-- Attached to `truma_heater_device`:
-  - `type: truma_climate` / `type: truma`: Truma Combi space / air heating climate control.
-- Attached to `alde_heater_device`:
-  - `type: alde_climate`: Exposes Alde heating as an ESPHome climate device. Requires `sensor` and `heater_switch`.
-
-## Supported Platforms
-
-- ESP32 (BLE required)
-- Tested with **ESP32**, **ESP32-C3**, **ESP32-S3**
-
-ESP8266 is **not supported** due to lack of BLE hardware.
-
-## See Also
-
-- ESPHome Bluetooth Tracker
-- ESPHome BLE Client
-- Home Assistant ESPHome Integration
-
+### How to Map Your Caravan's Physical Circuits:
+1. Temporarily configure all available semantic types in `wohnwagen.yaml`:
+   - Dimmers: `light_dim_decken`, `light_dim_amb1`, `light_dim_amb2`, `light_dim_amb3`, `light_dim_bett`.
+   - Switches: `light_aussen`, `light_kueche`, `light_wasch`, `light_dusche`, `light_amb1`..`3`, `light_zusatzl`..`r`.
+2. Turn off all physical lights in the caravan.
+3. Open Home Assistant or the ESPHome web dashboard and toggle each light entity one by one.
+4. Record which physical lamp illuminates (or if only an unpopulated PCB relay clicks with no lamp attached).
+5. Update the human-friendly `name:` in `wohnwagen.yaml` to match physical reality, and comment out any unused relay channels.
