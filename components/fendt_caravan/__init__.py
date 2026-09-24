@@ -3,7 +3,7 @@ from esphome.components import ble_client, esp32_ble_tracker
 import esphome.config_validation as cv
 from esphome.const import CONF_ID
 
-CODEOWNERS = ["@rawsludge"]
+CODEOWNERS = ["@lukx"]
 DEPENDENCIES = ["ble_client", "esp32_ble_tracker"]
 AUTO_LOAD = ["number", "select", "light", "switch", "text_sensor", "climate", "water_heater", "binary_sensor"]
 PLATFORMS = ["esp32"]
