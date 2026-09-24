@@ -80,6 +80,7 @@ void FridgeDeviceSensor::setup() {
 void FridgeDeviceSensor::dump_config() {
   ESP_LOGCONFIG(TAG, " -Fendt Refrigerator Device-");
   LOG_TEXT_SENSOR(TAG, "  Fridge Available", this->fridge_available_text_sensor_);
+  LOG_BINARY_SENSOR("  ", "Fridge Available", this->fridge_available_binary_sensor_);
   LOG_SWITCH(TAG, "  Fridge Switch", this->fridge_switch_);
   LOG_SELECT(TAG, "  Fridge Source", this->fridge_source_select_);
   LOG_SELECT(TAG, "  Fridge Intensity", this->fridge_temp_select_);

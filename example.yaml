@@ -100,6 +100,22 @@ text_sensor:
     name: "Fridge Available"
     parent_id: fendt_fridge
 
+binary_sensor:
+  - platform: fendt_caravan
+    type: shore_power
+    name: "Shore Power"
+    parent_id: fendt_mcu
+
+  - platform: fendt_caravan
+    type: truma_available
+    name: "Truma Available"
+    parent_id: fendt_truma
+
+  - platform: fendt_caravan
+    type: fridge_available
+    name: "Fridge Available"
+    parent_id: fendt_fridge
+
 switch:
   - platform: fendt_caravan
     type: main_switch

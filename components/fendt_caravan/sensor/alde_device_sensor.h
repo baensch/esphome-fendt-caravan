@@ -5,6 +5,7 @@
 #include "esphome/components/fendt_caravan/fendt_caravan.h"
 #include "esphome/components/text_sensor/text_sensor.h"
 #include "esphome/components/fendt_caravan/variable.h"
+#include "esphome/components/binary_sensor/binary_sensor.h"
 #include "esphome/components/climate/climate.h"
 #include "esphome/components/select/select.h"
 #include "esphome/components/switch/switch.h"
@@ -32,6 +33,7 @@ class AldeDeviceSensor : public CaravanDeviceComponent, public sensor::Sensor, p
   void dump_config() override;
 
   SUB_TEXT_SENSOR(alde_available);
+  SUB_BINARY_SENSOR(alde_available);
   SUB_CLIMATE(alde_climate);
   SUB_SWITCH(alde_heater);
   // FENDT_NUMBER(alde_heater_temperature);

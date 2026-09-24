@@ -12,6 +12,7 @@
 #include "esphome/core/component.h"
 #include "esphome/core/log.h"
 #include "device_decoders.h"
+#include "esphome/components/binary_sensor/binary_sensor.h"
 #include "device_commands.h"
 
 namespace esphome::fendt_caravan {
@@ -22,6 +23,7 @@ class FridgeDeviceSensor : public CaravanDeviceComponent, public sensor::Sensor,
   void dump_config() override;
 
   SUB_TEXT_SENSOR(fridge_available);
+  SUB_BINARY_SENSOR(fridge_available);
   SUB_SWITCH(fridge);
   void set_fridge_switch_switch(switch_::Switch *sw) { this->set_fridge_switch(sw); }
   SUB_SELECT(fridge_source);

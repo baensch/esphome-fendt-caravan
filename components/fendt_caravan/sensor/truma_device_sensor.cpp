@@ -52,6 +52,7 @@ void TrumaDeviceSensor::setup() {
 void TrumaDeviceSensor::dump_config() {
   ESP_LOGCONFIG(TAG, " -Fendt Truma Device-");
   LOG_TEXT_SENSOR(TAG, "  Truma Available", this->truma_available_text_sensor_);
+  LOG_BINARY_SENSOR("  ", "Truma Available", this->truma_available_binary_sensor_);
   LOG_SWITCH(TAG, "  Truma Air Heating Switch", this->truma_heater_switch_);
   LOG_SWITCH(TAG, "  Truma Water Heating Switch", this->truma_water_heater_switch_);
 }

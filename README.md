@@ -210,6 +210,19 @@ The component models the caravan's CI-BUS network hierarchically:
 - Attached to `fridge_device`:
   - `type: fridge`: Refrigerator power on/off switch (`cmd-tgl:FRIDGE_ON_OFF`).
 
+#### Binary Sensors (`binary_sensor:`)
+- Attached to `mcu_device`:
+  - `type: shore_power` (alias: `line_en`): 230V mains shore power connection status (`device_class: plug`, `LINE_EN`).
+  - `type: d_plus`: Alternator / tow vehicle engine running signal (`device_class: power`, `D_PLUS`).
+- Attached to `truma_heater_device`:
+  - `type: truma_available`: Truma Combi heater installation status (`entity_category: diagnostic`, `TH_AVAILABLE`).
+- Attached to `fridge_device`:
+  - `type: fridge_available`: CI-BUS smart refrigerator installation status (`entity_category: diagnostic`, `FRIDGE_AVAILABLE`).
+- Attached to `alde_heater_device`:
+  - `type: alde_available`: Alde heating system installation status (`entity_category: diagnostic`, `HEATER_AVAILABLE`).
+- Generic:
+  - `type: generic` or `type: binary_sensor`: Monitor any arbitrary CI-BUS boolean variable with custom `key_name`.
+
 #### Text Sensors (`text_sensor:`)
 - Attached to `mcu_device`:
   - `type: power_status`: Caravan mains / battery power status.

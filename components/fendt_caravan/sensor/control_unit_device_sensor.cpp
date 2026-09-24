@@ -106,6 +106,9 @@ void ControlUnitDeviceSensor::dump_config() {
   LOG_SENSOR(TAG, "  Water Level", this->water_level_sensor_);
   LOG_TEXT_SENSOR(TAG, "  Power Status", this->power_status_text_sensor_);
   LOG_TEXT_SENSOR(TAG, "  Software Version", this->software_version_text_sensor_);
+  LOG_BINARY_SENSOR("  ", "Shore Power", this->shore_power_binary_sensor_);
+  LOG_BINARY_SENSOR("  ", "Line EN", this->line_en_binary_sensor_);
+  LOG_BINARY_SENSOR("  ", "D Plus", this->d_plus_binary_sensor_);
   LOG_SWITCH(TAG, "  Floor Heater", this->floor_heater_switch_);
 }
 

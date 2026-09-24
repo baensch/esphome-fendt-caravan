@@ -13,4 +13,4 @@ This directory tracks feature requests and implementation stories derived from r
 | [05](05-truma-therme-boiler-switch.md) | Truma Therme 230V Water Boiler Switch | `switch` | `THERME_CONFIG`, `THERME_ON` | Backlog |
 | [06](06-freshwater-level-sensor.md) | Freshwater Tank Level Sensor | `sensor` | `WATER_LEVEL`, `WATER_MEASUREMENT` | Done |
 | [07](07-cibus-refrigerator.md) | CI-BUS Smart Refrigerator Integration | `switch` / `select` / `sensor` | `FRIDGE_AVAILABLE`, `FRIDGE_ON_OFF`, `FRIDGE_TEMP`, `FRIDGE_SOURCE`, `FRIDGE_MODE` | Done |
-| [08](08-shore-power-cellular-sensors.md) | Shore Power & GSM Signal Sensors | `binary_sensor` / `sensor` | `LINE_EN`, `GSM_SIGNAL` | Backlog |
+| [08](08-shore-power-cellular-sensors.md) | Shore Power & GSM Signal Sensors | `binary_sensor` / `sensor` | `LINE_EN`, `GSM_SIGNAL` | Done |

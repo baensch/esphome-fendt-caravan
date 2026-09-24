@@ -1,8 +1,10 @@
 #pragma once
 #include "esphome/core/component.h"
 #include "esphome/core/string_ref.h"
+#include <cctype>
 #include <functional>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -17,6 +19,8 @@ class IVariable {
   bool is_active() { return this->is_active_; }
   void is_active(bool active) { this->is_active_ = active; }
   virtual void decode(const std::string &value) = 0;
+  virtual bool get_bool_value() const = 0;
+  virtual void add_bool_callback(std::function<void(bool)> &&callback) = 0;
 
  protected:
   bool is_active_;
@@ -59,12 +63,31 @@ template<class T> class Variable : public IVariable {
   void set_on_decode_callback(std::function<void(const T &value)> &&callback) {
     this->on_decode_.add(std::move(callback));
   }
+  void add_bool_callback(std::function<void(bool)> &&callback) override {
+    this->on_bool_decode_.add(std::move(callback));
+  }
+
+  bool get_bool_value() const override {
+    if constexpr (std::is_same_v<T, bool>) {
+      return this->value_;
+    } else if constexpr (std::is_same_v<T, std::string>) {
+      std::string val = this->value_;
+      for (auto &c : val) c = std::tolower(static_cast<unsigned char>(c));
+      return (val == "1" || val == "01" || val == "true" || val == "on" ||
+              val == "available" || val == "connected" || val == "enable" || val == "enabled");
+    } else if constexpr (std::is_arithmetic_v<T>) {
+      return this->value_ != 0;
+    } else {
+      return false;
+    }
+  }
 
   void decode(const std::string &value) override {
     raw_value_ = value;
     this->value_ = this->decode_funct_(value);
     this->is_active_ = true;
     this->on_decode_.call(this->value_);
+    this->on_bool_decode_.call(this->get_bool_value());
   }
 
  protected:
@@ -72,6 +95,7 @@ template<class T> class Variable : public IVariable {
   std::function<const std::string(const std::string &, T val)> command_funct_;
   std::function<const std::string(const std::string &, T val)> alt_command_funct_;
   CallbackManager<void(const T &value)> on_decode_{};
+  CallbackManager<void(bool value)> on_bool_decode_{};
   T value_;
 };
 

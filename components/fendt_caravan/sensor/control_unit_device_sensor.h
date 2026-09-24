@@ -1,6 +1,7 @@
 #pragma once
 
 #ifdef USE_ESP32
+#include "esphome/components/binary_sensor/binary_sensor.h"
 #include "esphome/components/fendt_caravan/caravan_device_component.h"
 #include "esphome/components/fendt_caravan/fendt_caravan.h"
 #include "esphome/components/text_sensor/text_sensor.h"
@@ -27,6 +28,9 @@ class ControlUnitDeviceSensor : public CaravanDeviceComponent, public sensor::Se
   SUB_SENSOR(water_level);
   SUB_TEXT_SENSOR(power_status);
   SUB_TEXT_SENSOR(software_version);
+  SUB_BINARY_SENSOR(shore_power);
+  SUB_BINARY_SENSOR(line_en);
+  SUB_BINARY_SENSOR(d_plus);
   SUB_SWITCH(all_lights);
   SUB_SWITCH(floor_heater);
 

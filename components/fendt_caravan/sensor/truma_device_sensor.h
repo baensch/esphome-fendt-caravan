@@ -12,6 +12,7 @@
 #include "esphome/core/string_ref.h"
 #include "esphome/core/component.h"
 #include "esphome/core/log.h"
+#include "esphome/components/binary_sensor/binary_sensor.h"
 #include "device_decoders.h"
 #include "device_commands.h"
 
@@ -28,6 +29,7 @@ class TrumaDeviceSensor : public CaravanDeviceComponent, public sensor::Sensor, 
   void set_truma_water_heater_water_heater(water_heater::WaterHeater *wh) { this->truma_water_heater_ = wh; }
 
   SUB_TEXT_SENSOR(truma_available);
+  SUB_BINARY_SENSOR(truma_available);
   SUB_SWITCH(truma_heater);
   SUB_SWITCH(truma_water_heater);
 

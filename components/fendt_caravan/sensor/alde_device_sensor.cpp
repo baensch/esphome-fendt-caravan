@@ -36,6 +36,7 @@ void AldeDeviceSensor::setup() {
 void AldeDeviceSensor::dump_config() {
   ESP_LOGCONFIG(TAG, " -Fendt Alde Device-");
   LOG_TEXT_SENSOR(TAG, "  Alde Sensor", this->alde_available_text_sensor_);
+  LOG_BINARY_SENSOR("  ", "Alde Available", this->alde_available_binary_sensor_);
   LOG_SWITCH(TAG, "  Alde Status Switch", this->alde_heater_switch_);
   // LOG_NUMBER(TAG, "  Heater Temperature", this->alde_heater_temperature_number_);
   LOG_SWITCH(TAG, "  Heater Water", this->alde_heater_water_switch_);
