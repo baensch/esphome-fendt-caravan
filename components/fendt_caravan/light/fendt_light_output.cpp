@@ -24,7 +24,7 @@ void FendtLightOutput::write_state(light::LightState *state) {
     return;
 
   bool cur_on = (this->variable_ != nullptr && this->variable_->get_value() != 0);
-  bool target_on = state->current_values.is_on();
+  bool target_on = state->remote_values.is_on();
   std::string command = "";
 
   if (this->color_mode_ == light::ColorMode::BRIGHTNESS) {

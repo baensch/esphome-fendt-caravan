@@ -29,6 +29,9 @@ During hardware testing of binary light circuits (specifically `Caravan Waschrau
 3. If only `cmd-tgl:` is supported, introduce state confirmation tracking: if a toggle is sent and the MCU notification does not match the expected state within a timeout window, resynchronize the entity state.
 
 ## Acceptance Criteria
-1. `FendtLightOutput::write_state` evaluates `remote_values.is_on()`.
-2. Turning binary lights OFF works reliably and does not leave HA out of phase with physical fixtures.
-3. If an action fails, the HA entity accurately snaps back to the physical state rather than inverting subsequent toggles.
+- [x] `FendtLightOutput::write_state` evaluates `remote_values.is_on()`.
+- [ ] Turning binary lights OFF works reliably and does not leave HA out of phase with physical fixtures (ready for user re-test).
+- [ ] If an action fails, the HA entity accurately snaps back to the physical state rather than inverting subsequent toggles.
+
+Status: **In Verification**
+

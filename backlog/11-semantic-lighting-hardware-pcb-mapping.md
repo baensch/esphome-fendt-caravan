@@ -25,5 +25,9 @@ In Hobby and Fendt caravans equipped with Toptron central electrical modules, fa
    - Update the `name:` in `wohnwagen.yaml` to reflect the physical reality.
 
 ## Acceptance Criteria
-1. The component supports arbitrary combinations of `name:` and `key_name:` without being constrained by predefined shortcuts.
-2. User documentation provides clear instructions for mapping and renaming circuits when factory PCB wiring differs from CI-BUS variable labels.
+- [x] The component supports arbitrary combinations of `name:` and `key_name:` without being constrained by predefined shortcuts.
+- [x] User documentation provides clear instructions for mapping and renaming circuits when factory PCB wiring differs from CI-BUS variable labels.
+- [x] Applied physical mapping deductions directly to `wohnwagen.yaml`.
+
+Status: **Done**
+

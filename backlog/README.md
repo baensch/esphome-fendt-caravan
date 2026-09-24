@@ -15,7 +15,7 @@ This directory tracks feature requests and implementation stories derived from r
 | [07](07-cibus-refrigerator.md) | CI-BUS Smart Refrigerator Integration | `switch` / `select` / `sensor` | `FRIDGE_AVAILABLE`, `FRIDGE_ON_OFF`, `FRIDGE_TEMP`, `FRIDGE_SOURCE`, `FRIDGE_MODE` | Done |
 | [08](08-shore-power-cellular-sensors.md) | Shore Power & GSM Signal Sensors | `binary_sensor` / `sensor` | `LINE_EN`, `GSM_SIGNAL` | Done |
 | [09](09-bug-fridge-gas-230v-inverted.md) | Bug: Inverted Refrigerator Energy Sources (Gas vs 230V) | `select` | `FRIDGE_SOURCE` | Done |
-| [10](10-bug-light-switch-state-desync-and-missed-off.md) | Bug: Light Switch State Desync & Missed Off Toggle | `light` | `LIGHT_<NAME>`, `LIGHT_WASCH` | Backlog |
-| [11](11-semantic-lighting-hardware-pcb-mapping.md) | Semantic Lighting Hardware PCB Mapping & User Overrides | `light` | `LIGHT_<NAME>` | Backlog |
+| [10](10-bug-light-switch-state-desync-and-missed-off.md) | Bug: Light Switch State Desync & Missed Off Toggle | `light` | `LIGHT_<NAME>`, `LIGHT_WASCH` | In Progress |
+| [11](11-semantic-lighting-hardware-pcb-mapping.md) | Semantic Lighting Hardware PCB Mapping & User Overrides | `light` | `LIGHT_<NAME>` | Done |
 | [12](12-unexposed-candidate-light-circuits.md) | Exposing All Candidate Lighting Circuits (Toilet/Shower, etc.) | `light` | `LIGHT_DUSCHE`, `LIGHT_KINDER`, `LIGHT_BETT`, etc. | Done |
 
