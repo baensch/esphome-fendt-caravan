@@ -177,3 +177,6 @@ For advanced diagnostics, full specifications, and hardware troubleshooting:
 - **[Complete Reference Configuration](docs/reference.md#2-complete-reference-configuration)**: Full production-ready YAML demonstrating all 5 logical devices and 8 supported platforms.
 - **[Hardware PCB Wiring & Mapping Procedure](docs/reference.md#4-hardware-pcb-wiring--mapping-procedure)**: Detailed workflow for diagnosing factory wiring variations across different model years and layouts.
 
+# Credit
+This is a fork of [rawsludge](https://github.com/rawsludge/esphome)'s hard work, enhanced with some refactorings and unification of the device classes, as well
+as rigourous testing and debugging.

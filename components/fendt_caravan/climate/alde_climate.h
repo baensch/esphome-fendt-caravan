@@ -10,7 +10,7 @@
 
 namespace esphome::fendt_caravan {
 
-class FendtClimate : public CaravanComponentBase<float>, public climate::Climate {
+class AldeClimate : public CaravanComponentBase<float>, public climate::Climate {
  public:
   void setup() override;
   void dump_config() override;

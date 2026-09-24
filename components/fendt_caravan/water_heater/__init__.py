@@ -38,5 +38,3 @@ async def to_code(config):
         cg.add(var.set_sensor(sens))
     await cg.register_component(var, config)
     await cg.register_parented(var, parent)
-    if hasattr(parent, f"set_{config[CONF_TYPE]}_water_heater"):
-        cg.add(getattr(parent, f"set_{config[CONF_TYPE]}_water_heater")(var))

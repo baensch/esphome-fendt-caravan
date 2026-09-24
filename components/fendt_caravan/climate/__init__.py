@@ -6,8 +6,8 @@ from esphome.const import CONF_HEAT_ACTION, CONF_SENSOR, CONF_TYPE
 
 from .. import CONF_KEY_NAME, CONF_PARENT_ID, CaravanDeviceComponent, fendt_caravan_ns
 
-FendtClimate = fendt_caravan_ns.class_(
-    "FendtClimate",
+AldeClimate = fendt_caravan_ns.class_(
+    "AldeClimate",
     climate.Climate,
     cg.Component,
     cg.Parented.template(CaravanDeviceComponent),
@@ -25,7 +25,7 @@ CONF_HEATER_SWITCH = "heater_switch"
 
 CONFIG_SCHEMA = cv.typed_schema(
     {
-        "alde_climate": climate.climate_schema(FendtClimate).extend(
+        "alde_climate": climate.climate_schema(AldeClimate).extend(
             {
                 cv.Required(CONF_PARENT_ID): cv.use_id(CaravanDeviceComponent),
                 cv.Required(CONF_SENSOR): cv.use_id(sensor.Sensor),
@@ -76,5 +76,4 @@ async def to_code(config):
         )
     await cg.register_component(var, config)
     await cg.register_parented(var, parent)
-    cg.add(getattr(parent, f"set_{config[CONF_TYPE]}_climate")(var))
 

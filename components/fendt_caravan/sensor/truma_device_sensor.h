@@ -13,8 +13,8 @@
 #include "esphome/core/component.h"
 #include "esphome/core/log.h"
 #include "esphome/components/binary_sensor/binary_sensor.h"
-#include "device_decoders.h"
-#include "device_commands.h"
+#include "esphome/components/fendt_caravan/device_decoders.h"
+#include "esphome/components/fendt_caravan/device_commands.h"
 
 namespace esphome::fendt_caravan {
 
@@ -23,21 +23,12 @@ class TrumaDeviceSensor : public CaravanDeviceComponent, public sensor::Sensor, 
   void setup() override;
   void dump_config() override;
 
-  void set_truma_climate(climate::Climate *c) { this->truma_climate_ = c; }
-  void set_truma_climate_climate(climate::Climate *c) { this->truma_climate_ = c; }
-  void set_truma_water_heater(water_heater::WaterHeater *wh) { this->truma_water_heater_ = wh; }
-  void set_truma_water_heater_water_heater(water_heater::WaterHeater *wh) { this->truma_water_heater_ = wh; }
-
   SUB_TEXT_SENSOR(truma_available);
   SUB_BINARY_SENSOR(truma_available);
   SUB_SWITCH(truma_heater);
   SUB_SWITCH(truma_water_heater);
 
   void on_state_change_command(const std::string &tag, const std::string &command) override;
-
- protected:
-  climate::Climate *truma_climate_{nullptr};
-  water_heater::WaterHeater *truma_water_heater_{nullptr};
 };
 
 }  // namespace esphome::fendt_caravan

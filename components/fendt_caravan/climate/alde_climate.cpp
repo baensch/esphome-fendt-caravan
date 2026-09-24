@@ -1,11 +1,11 @@
 #ifdef USE_ESP32
-#include "fendt_climate.h"
+#include "alde_climate.h"
 
 static const char *const TAG = "fc.climate";
 
 namespace esphome::fendt_caravan {
 
-void FendtClimate::setup() {
+void AldeClimate::setup() {
   this->mode = climate::CLIMATE_MODE_HEAT;
   if (this->heater_switch_ != nullptr) {
     this->heater_switch_->publish_state(true);
@@ -36,14 +36,14 @@ void FendtClimate::setup() {
   this->publish_state();
 }
 
-void FendtClimate::dump_config() {
+void AldeClimate::dump_config() {
   LOG_CLIMATE(TAG, "Caravan Climate Control", this);
   LOG_SENSOR(TAG, "  Temperature sensor", this->sensor_);
 }
-Trigger<> *FendtClimate::get_heat_action_trigger() { return &this->heat_action_trigger_; }
-Trigger<> *FendtClimate::get_off_action_trigger() { return &this->off_action_trigger_; }
+Trigger<> *AldeClimate::get_heat_action_trigger() { return &this->heat_action_trigger_; }
+Trigger<> *AldeClimate::get_off_action_trigger() { return &this->off_action_trigger_; }
 
-void FendtClimate::control(const climate::ClimateCall &call) {
+void AldeClimate::control(const climate::ClimateCall &call) {
   Trigger<> *trig = &this->heat_action_trigger_;
   bool action_ready = false;
   bool publish_state = false;
@@ -89,7 +89,7 @@ void FendtClimate::control(const climate::ClimateCall &call) {
     this->publish_state();
 }
 
-climate::ClimateTraits FendtClimate::traits() {
+climate::ClimateTraits AldeClimate::traits() {
   auto traits = climate::ClimateTraits();
   traits.add_feature_flags(climate::CLIMATE_SUPPORTS_CURRENT_TEMPERATURE | climate::CLIMATE_SUPPORTS_ACTION);
   traits.set_supported_modes({climate::CLIMATE_MODE_OFF, climate::ClimateMode::CLIMATE_MODE_HEAT});
@@ -103,7 +103,7 @@ climate::ClimateTraits FendtClimate::traits() {
   return traits;
 }
 
-void FendtClimate::on_decoded(const float &target) {
+void AldeClimate::on_decoded(const float &target) {
   ESP_LOGV(TAG, "On Decoded called");
   this->target_temperature = target;
   this->publish_state();

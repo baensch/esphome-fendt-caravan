@@ -11,9 +11,9 @@
 #include "esphome/core/string_ref.h"
 #include "esphome/core/component.h"
 #include "esphome/core/log.h"
-#include "device_decoders.h"
+#include "esphome/components/fendt_caravan/device_decoders.h"
 #include "esphome/components/binary_sensor/binary_sensor.h"
-#include "device_commands.h"
+#include "esphome/components/fendt_caravan/device_commands.h"
 
 namespace esphome::fendt_caravan {
 

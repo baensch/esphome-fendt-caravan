@@ -20,7 +20,13 @@ float DeviceDecoders::decode_temperature(const std::string &data) {
   start = value.find(',');
   if (start != std::string::npos)
     value.replace(start, 1, ".");
-  return std::stof(value);
+  trim(value);
+  auto result = parse_data<float>(value);
+  if (!result) {
+    ESP_LOGE(TAG, "Temperature parse error. Data: '%s'", data.c_str());
+    return NAN;
+  }
+  return result.value();
 }
 float DeviceDecoders::decode_voltage(const std::string &data) {
   std::string value = data;

@@ -29,7 +29,7 @@ void FendtLightOutput::write_state(light::LightState *state) {
 
   if (this->color_mode_ == light::ColorMode::BRIGHTNESS) {
     float brightness = state->remote_values.get_brightness();
-    uint8_t target_level = (uint8_t) std::round(brightness * 15.0f);
+    uint8_t target_level = (uint8_t) std::round(brightness * static_cast<float>(MAX_BRIGHTNESS_LEVEL));
 
     ESP_LOGD(TAG, "'%s' write_state dimmable: cur_on=%s (val=%d), target_on=%s, target_level=%d (b=%.2f)",
              this->key_name_.c_str(), ONOFF(cur_on),
@@ -82,7 +82,7 @@ void FendtLightOutput::on_decoded(const uint8_t &state) {
   if (this->light_state_ != nullptr) {
     this->light_state_->remote_values.set_state(state != 0);
     if (this->color_mode_ == light::ColorMode::BRIGHTNESS && state > 0) {
-      this->light_state_->remote_values.set_brightness((float) (state) / 15.0f);
+      this->light_state_->remote_values.set_brightness((float) (state) / static_cast<float>(MAX_BRIGHTNESS_LEVEL));
     }
     this->light_state_->publish_state();
   }

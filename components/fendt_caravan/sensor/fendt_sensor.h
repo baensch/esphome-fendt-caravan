@@ -9,19 +9,6 @@
 namespace esphome::fendt_caravan {
 
 class FendtSensor : public CaravanComponentBase<float>, public sensor::Sensor {
- public:
-  void setup() override {
-    if (this->key_name_.empty())
-      return;
-    auto *variable = static_cast<Variable<float> *>(this->get_parent()->get_variable(this->key_name_));
-    if (variable != nullptr) {
-      this->set_variable(variable);
-      if (variable->is_active()) {
-        this->publish_state(variable->get_value());
-      }
-    }
-  }
-
  protected:
   void on_decoded(const float &value) override;
 

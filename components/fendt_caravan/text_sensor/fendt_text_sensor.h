@@ -13,19 +13,6 @@ namespace esphome::fendt_caravan {
 using namespace std;
 
 class FendtTextSensor : public CaravanComponentBase<std::string>, public text_sensor::TextSensor {
- public:
-  void setup() override {
-    if (this->key_name_.empty())
-      return;
-    auto *variable = static_cast<Variable<std::string> *>(this->get_parent()->get_variable(this->key_name_));
-    if (variable != nullptr) {
-      this->set_variable(variable);
-      if (variable->is_active()) {
-        this->publish_state(variable->get_value());
-      }
-    }
-  }
-
  protected:
   void on_decoded(const std::string &value) override;
 };

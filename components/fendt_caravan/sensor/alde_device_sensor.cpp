@@ -21,7 +21,11 @@ void AldeDeviceSensor::setup() {
   this->add_variable(heater_water);
 
   auto *heater_water_temp = new Variable<bool>(
-      "HEATER_WATER_TEMP", [](const std::string &data) { return DeviceDecoders::decode_temperature(data) == 65.0f; },
+      "HEATER_WATER_TEMP",
+      [](const std::string &data) {
+        float temp = DeviceDecoders::decode_temperature(data);
+        return !std::isnan(temp) && temp >= 60.0f;
+      },
       Commands::update_toggle<bool>);
   this->add_variable(heater_water_temp);
 

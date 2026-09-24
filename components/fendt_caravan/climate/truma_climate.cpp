@@ -1,6 +1,7 @@
 #ifdef USE_ESP32
 #include "truma_climate.h"
-#include "esphome/components/fendt_caravan/sensor/device_commands.h"
+#include "esphome/components/fendt_caravan/device_commands.h"
+#include "esphome/components/fendt_caravan/device_decoders.h"
 #include <cmath>
 
 namespace esphome::fendt_caravan {
@@ -15,13 +16,10 @@ void TrumaClimate::setup() {
     auto *var_available = static_cast<Variable<std::string> *>(this->parent_->get_variable("TH_AVAILABLE"));
     if (var_available != nullptr) {
       var_available->set_on_decode_callback([this](const std::string &val) {
-        bool avail = (val == "Available" || val == "1" || val == "true");
-        this->on_available_decoded_(avail);
+        this->on_available_decoded_(DeviceDecoders::decode_bool(val));
       });
       if (var_available->is_active()) {
-        const std::string &val = var_available->get_value();
-        bool avail = (val == "Available" || val == "1" || val == "true");
-        this->on_available_decoded_(avail);
+        this->on_available_decoded_(DeviceDecoders::decode_bool(var_available->get_value()));
       }
     }
 

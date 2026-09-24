@@ -16,6 +16,8 @@ class IVariable {
   void set_name(const std::string &name) { this->name_ = name; }
   std::string get_raw_value() { return this->raw_value_; }
 
+  virtual ~IVariable() = default;
+
   bool is_active() { return this->is_active_; }
   void is_active(bool active) { this->is_active_ = active; }
   virtual void decode(const std::string &value) = 0;

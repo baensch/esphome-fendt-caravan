@@ -7,8 +7,8 @@
 #include "esphome/components/sensor/sensor.h"
 #include "esphome/core/component.h"
 #include "esphome/core/log.h"
-#include "device_decoders.h"
-#include "device_commands.h"
+#include "esphome/components/fendt_caravan/device_decoders.h"
+#include "esphome/components/fendt_caravan/device_commands.h"
 #include <map>
 #include <vector>
 
@@ -16,6 +16,8 @@ namespace esphome::fendt_caravan {
 
 class LightingDeviceSensor : public CaravanDeviceComponent, public sensor::Sensor, public Parented<FendtCaravan> {
  public:
+  static constexpr uint32_t LIGHT_BUSY_TIMEOUT_MS = 1500;
+
   void setup() override;
   void loop() override;
   void dump_config() override;

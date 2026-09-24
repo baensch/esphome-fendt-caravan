@@ -23,8 +23,8 @@ void LightingDeviceSensor::setup() {
 }
 
 void LightingDeviceSensor::loop() {
-  if (this->is_busy_ && (millis() - this->busy_timestamp_ > 1500)) {
-    ESP_LOGW(TAG, "LIGHT_BUSY timeout (>1500ms), resetting busy flag");
+  if (this->is_busy_ && (millis() - this->busy_timestamp_ > LIGHT_BUSY_TIMEOUT_MS)) {
+    ESP_LOGW(TAG, "LIGHT_BUSY timeout (>%ums), resetting busy flag", LIGHT_BUSY_TIMEOUT_MS);
     this->is_busy_ = false;
     this->flush_pending_commands_();
   }
@@ -90,8 +90,8 @@ void LightingDeviceSensor::on_state_change_command(const std::string &tag, const
   if (command.empty())
     return;
 
-  if (this->is_busy_ && (millis() - this->busy_timestamp_ > 1500)) {
-    ESP_LOGW(TAG, "LIGHT_BUSY timeout (>1500ms), resetting busy flag");
+  if (this->is_busy_ && (millis() - this->busy_timestamp_ > LIGHT_BUSY_TIMEOUT_MS)) {
+    ESP_LOGW(TAG, "LIGHT_BUSY timeout (>%ums), resetting busy flag", LIGHT_BUSY_TIMEOUT_MS);
     this->is_busy_ = false;
   }
 

@@ -37,7 +37,7 @@ void FendtCaravan::loop() {
 
     ESP_LOGD(TAG, "Command sent: %s, %d", cmd.c_str(), cmd.length());
     this->last_command_time_ = time_stamp;
-    this->commands_.erase(std::remove(this->commands_.begin(), this->commands_.end(), cmd), this->commands_.end());
+    this->commands_.erase(this->commands_.begin());
   }
 }
 
@@ -84,16 +84,15 @@ void FendtCaravan::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t
     case ESP_GATTC_NOTIFY_EVT:
       if (param->notify.handle == this->char_handle_) {
         this->wait_buffer_ = true;
-        char buffer[25];
-        memset(buffer, 0, param->notify.value_len + 1);
-        memcpy(buffer, param->notify.value, param->notify.value_len);
-        std::string result = std::string(buffer);
+        std::string result(reinterpret_cast<const char *>(param->notify.value), param->notify.value_len);
         if (!this->last_response_.empty()) {
           result = this->last_response_ + result;
           this->last_response_.clear();
         }
-        if (strchr(buffer, '@') != nullptr) {
-          this->last_response_.append(buffer, param->notify.value_len - 1);
+        if (result.find('@') != std::string::npos) {
+          // Remove the trailing '@' indicator and buffer partial chunk
+          size_t at_pos = result.find('@');
+          this->last_response_ = result.substr(0, at_pos);
           break;
         }
         this->wait_buffer_ = false;
@@ -106,57 +105,29 @@ void FendtCaravan::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t
   }
 }
 void FendtCaravan::add_command_(const std::string &cmd) {
-  int8_t start_index = 0;
-  int8_t end_index = 17;
-  int8_t last_index = cmd.length();
-  bool last_chunk = false;
-  while (!last_chunk) {
-    std::string chunk;
-    if (end_index < last_index) {
-      chunk = cmd.substr(0, 17);
-      chunk += "@";
+  constexpr size_t CHUNK_SIZE = 17;
+  size_t start_index = 0;
+  while (start_index < cmd.length()) {
+    size_t remaining = cmd.length() - start_index;
+    if (remaining > CHUNK_SIZE) {
+      this->commands_.push_back(cmd.substr(start_index, CHUNK_SIZE) + "@");
+      start_index += CHUNK_SIZE;
     } else {
-      chunk = cmd.substr(start_index, last_index);
-      last_chunk = true;
+      this->commands_.push_back(cmd.substr(start_index));
+      break;
     }
-    this->commands_.push_back(chunk);
-    start_index = end_index;
-    end_index = start_index + 17;
-    if (end_index > last_index)
-      end_index = last_index;
   }
 }
 
 void FendtCaravan::on_data_received_(const std::string &data) {
-  std::string key, value;
+  size_t colon = data.find(':');
+  if (colon == std::string::npos)
+    return;
+  std::string key = data.substr(0, colon);
+  std::string value = data.substr(colon + 1);
 
-  size_t start = 0;
-  size_t end = data.find(':');
-  key = data.substr(start, end);
-  value = data.substr(end + 1);
-  if (this->mcu_device_) {
-    bool result = this->mcu_device_->decode(key, value);
-    if (result)
-      return;
-  }
-  if (this->alde_heater_device_ != nullptr) {
-    bool catched = this->alde_heater_device_->decode(key, value);
-    if (catched)
-      return;
-  }
-  if (this->truma_heater_device_ != nullptr) {
-    bool catched = this->truma_heater_device_->decode(key, value);
-    if (catched)
-      return;
-  }
-  if (this->lighting_device_ != nullptr) {
-    bool catched = this->lighting_device_->decode(key, value);
-    if (catched)
-      return;
-  }
-  if (this->fridge_device_ != nullptr) {
-    bool catched = this->fridge_device_->decode(key, value);
-    if (catched)
+  for (auto *device : this->devices_) {
+    if (device->decode(key, value))
       return;
   }
 }

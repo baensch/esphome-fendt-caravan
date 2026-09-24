@@ -19,7 +19,8 @@ class DeviceDecoders {
   static bool decode_bool(const std::string &value) {
     std::string decode = value;
     std::transform(decode.begin(), decode.end(), decode.begin(), [](unsigned char c) { return std::tolower(c); });
-    return (decode == "01") || (decode == "true") || (decode == "1") || (decode == "on");
+    return (decode == "1" || decode == "01" || decode == "true" || decode == "on" ||
+            decode == "available" || decode == "connected" || decode == "enable" || decode == "enabled");
   }
   static std::string decode_str(const std::string &value) { return value; }
   static std::string decode_bool_str(const std::string &value, const char **text) {

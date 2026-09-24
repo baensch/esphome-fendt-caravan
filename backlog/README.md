@@ -19,3 +19,12 @@ This directory tracks feature requests and implementation stories derived from r
 | [11](11-semantic-lighting-hardware-pcb-mapping.md) | Semantic Lighting Hardware PCB Mapping & User Overrides | `light` | `LIGHT_<NAME>` | Done |
 | [12](12-unexposed-candidate-light-circuits.md) | Exposing All Candidate Lighting Circuits (Toilet/Shower, etc.) | `light` | `LIGHT_DUSCHE`, `LIGHT_KINDER`, `LIGHT_BETT`, etc. | Done |
 
+## Refactoring Backlog
+
+| Refactoring | Title | Focus Area | Status |
+|---|---|---|---|
+| [Refactoring 1](refactoring-1.md) | Safety, Robustness & Low-Level C++ Bug Fixes | Buffer overflow, slicing bug, FIFO queue, virtual destructor, exception safety | Done |
+| [Refactoring 2](refactoring-2.md) | Test Bench Shortcuts & Magic Numbers | Alde float comparison, lighting scale/busy constants, water heater presets | Done |
+| [Refactoring 3](refactoring-3.md) | Eliminating Repetition via Pragmatic Abstractions | Base entity setup, canonical bool decoding, light output header consolidation | Done |
+| [Refactoring 4](refactoring-4.md) | Architecture, Structure & File Organization | Subsystem vector decoupling, protocol file relocation, climate naming | Done |
+

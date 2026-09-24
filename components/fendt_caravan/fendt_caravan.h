@@ -21,29 +21,19 @@ class FendtCaravan : public Component, public ble_client::BLEClientNode {
                            esp_ble_gattc_cb_param_t *param) override;
 
   void set_address(uint64_t address) { address_ = address; };
-  void set_mcu_device_sensor(CaravanDeviceComponent *mcu_device_sensor) {
-    this->mcu_device_ = mcu_device_sensor;
-    this->mcu_device_->set_command_send_callback([this](const std::string &cmd) { this->on_command_send(cmd); });
+  void register_device(CaravanDeviceComponent *device) {
+    if (device == nullptr)
+      return;
+    this->devices_.push_back(device);
+    device->set_command_send_callback([this](const std::string &cmd) { this->on_command_send(cmd); });
   }
-  void set_alde_heater_device_sensor(CaravanDeviceComponent *alde_device_sensor) {
-    this->alde_heater_device_ = alde_device_sensor;
-    this->alde_heater_device_->set_command_send_callback(
-        [this](const std::string &cmd) { this->on_command_send(cmd); });
-  }
-  void set_lighting_device_sensor(CaravanDeviceComponent *device_sensor) {
-    this->lighting_device_ = device_sensor;
-    this->lighting_device_->set_command_send_callback([this](const std::string &cmd) { this->on_command_send(cmd); });
-  }
-  void set_truma_heater_device_sensor(CaravanDeviceComponent *device_sensor) {
-    this->truma_heater_device_ = device_sensor;
-    this->truma_heater_device_->set_command_send_callback(
-        [this](const std::string &cmd) { this->on_command_send(cmd); });
-  }
-  void set_fridge_device_sensor(CaravanDeviceComponent *device_sensor) {
-    this->fridge_device_ = device_sensor;
-    this->fridge_device_->set_command_send_callback(
-        [this](const std::string &cmd) { this->on_command_send(cmd); });
-  }
+
+  void set_mcu_device_sensor(CaravanDeviceComponent *d) { this->register_device(d); }
+  void set_alde_heater_device_sensor(CaravanDeviceComponent *d) { this->register_device(d); }
+  void set_lighting_device_sensor(CaravanDeviceComponent *d) { this->register_device(d); }
+  void set_truma_heater_device_sensor(CaravanDeviceComponent *d) { this->register_device(d); }
+  void set_fridge_device_sensor(CaravanDeviceComponent *d) { this->register_device(d); }
+
   void dump_config() override;
   void on_command_send(const std::string &command);
 
@@ -60,11 +50,7 @@ class FendtCaravan : public Component, public ble_client::BLEClientNode {
   std::vector<std::string> commands_{};
   uint32_t last_command_time_ = 0;
   std::string last_response_ = {};
-  CaravanDeviceComponent *mcu_device_{nullptr};
-  CaravanDeviceComponent *alde_heater_device_{nullptr};
-  CaravanDeviceComponent *lighting_device_{nullptr};
-  CaravanDeviceComponent *truma_heater_device_{nullptr};
-  CaravanDeviceComponent *fridge_device_{nullptr};
+  std::vector<CaravanDeviceComponent *> devices_{};
 };
 }  // namespace esphome::fendt_caravan
 #endif

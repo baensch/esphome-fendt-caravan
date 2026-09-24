@@ -26,7 +26,17 @@ template<typename T> class CaravanComponentBase : public Component, public Paren
   }
   void set_key_name(std::string key_name) { this->key_name_ = std::move(key_name); }
 
-  void setup() override = 0;
+  void setup() override {
+    if (this->key_name_.empty() || this->parent_ == nullptr)
+      return;
+    auto *variable = static_cast<Variable<T> *>(this->get_parent()->get_variable(this->key_name_));
+    if (variable != nullptr) {
+      this->set_variable(variable);
+      if (variable->is_active()) {
+        this->on_decoded(variable->get_value());
+      }
+    }
+  }
 
  protected:
   virtual void on_decoded(const T &value) {}

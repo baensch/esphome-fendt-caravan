@@ -1,11 +1,18 @@
 #ifdef USE_ESP32
 #include "truma_water_heater.h"
-#include "esphome/components/fendt_caravan/sensor/device_commands.h"
+#include "esphome/components/fendt_caravan/device_commands.h"
+#include "esphome/components/fendt_caravan/device_decoders.h"
 #include <cmath>
 
 namespace esphome::fendt_caravan {
 
 static const char *const TAG = "fc.truma_wh";
+
+static constexpr float TEMP_ECO = 40.0f;
+static constexpr float TEMP_PERFORMANCE = 60.0f;
+static constexpr float TEMP_HIGH_DEMAND = 70.0f;
+static constexpr float THRESHOLD_PERFORMANCE = 45.0f;
+static constexpr float THRESHOLD_HIGH_DEMAND = 65.0f;
 
 void TrumaWaterHeater::setup() {
   this->mode_ = water_heater::WATER_HEATER_MODE_OFF;
@@ -15,26 +22,20 @@ void TrumaWaterHeater::setup() {
     auto *var_th_avail = static_cast<Variable<std::string> *>(this->parent_->get_variable("TH_AVAILABLE"));
     if (var_th_avail != nullptr) {
       var_th_avail->set_on_decode_callback([this](const std::string &val) {
-        bool avail = (val == "Available" || val == "1" || val == "true");
-        this->on_th_available_decoded_(avail);
+        this->on_th_available_decoded_(DeviceDecoders::decode_bool(val));
       });
       if (var_th_avail->is_active()) {
-        const std::string &val = var_th_avail->get_value();
-        bool avail = (val == "Available" || val == "1" || val == "true");
-        this->on_th_available_decoded_(avail);
+        this->on_th_available_decoded_(DeviceDecoders::decode_bool(var_th_avail->get_value()));
       }
     }
 
     auto *var_tt_avail = static_cast<Variable<std::string> *>(this->parent_->get_variable("TT_AVAILABLE"));
     if (var_tt_avail != nullptr) {
       var_tt_avail->set_on_decode_callback([this](const std::string &val) {
-        bool avail = (val == "Available" || val == "1" || val == "true");
-        this->on_tt_available_decoded_(avail);
+        this->on_tt_available_decoded_(DeviceDecoders::decode_bool(val));
       });
       if (var_tt_avail->is_active()) {
-        const std::string &val = var_tt_avail->get_value();
-        bool avail = (val == "Available" || val == "1" || val == "true");
-        this->on_tt_available_decoded_(avail);
+        this->on_tt_available_decoded_(DeviceDecoders::decode_bool(var_tt_avail->get_value()));
       }
     }
 
@@ -140,9 +141,9 @@ void TrumaWaterHeater::on_target_temperature_decoded_(float target) {
 void TrumaWaterHeater::update_mode_from_target_() {
   if (!this->power_state_) {
     this->mode_ = water_heater::WATER_HEATER_MODE_OFF;
-  } else if (!std::isnan(this->target_temperature_) && this->target_temperature_ > 65.0f) {
+  } else if (!std::isnan(this->target_temperature_) && this->target_temperature_ > THRESHOLD_HIGH_DEMAND) {
     this->mode_ = water_heater::WATER_HEATER_MODE_HIGH_DEMAND;
-  } else if (!std::isnan(this->target_temperature_) && this->target_temperature_ > 45.0f) {
+  } else if (!std::isnan(this->target_temperature_) && this->target_temperature_ > THRESHOLD_PERFORMANCE) {
     this->mode_ = water_heater::WATER_HEATER_MODE_PERFORMANCE;
   } else {
     this->mode_ = water_heater::WATER_HEATER_MODE_ECO;
@@ -175,13 +176,13 @@ void TrumaWaterHeater::control(const water_heater::WaterHeaterCall &call) {
   } else if (has_mode) {
     switch (call.get_mode().value()) {
       case water_heater::WATER_HEATER_MODE_ECO:
-        target_temp = 40.0f;
+        target_temp = TEMP_ECO;
         break;
       case water_heater::WATER_HEATER_MODE_PERFORMANCE:
-        target_temp = 60.0f;
+        target_temp = TEMP_PERFORMANCE;
         break;
       case water_heater::WATER_HEATER_MODE_HIGH_DEMAND:
-        target_temp = 70.0f;
+        target_temp = TEMP_HIGH_DEMAND;
         break;
       default:
         break;

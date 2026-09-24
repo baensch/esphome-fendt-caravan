@@ -8,6 +8,8 @@ namespace esphome::fendt_caravan {
 
 class FendtLightOutput : public light::LightOutput, public CaravanComponentBase<uint8_t> {
  public:
+  static constexpr uint8_t MAX_BRIGHTNESS_LEVEL = 15;
+
   FendtLightOutput() { this->color_mode_ = light::ColorMode::ON_OFF; };
   FendtLightOutput(light::ColorMode color_mode) { this->color_mode_ = color_mode; };
 
