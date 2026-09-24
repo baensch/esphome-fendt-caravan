@@ -159,9 +159,7 @@ wifi:
   password: !secret wifi_password
 
 external_components:
-  - source:
-      type: local
-      path: components
+  - source: github://lukx/esphome-fendt-caravan
     components: [fendt_caravan]
 
 esp32_ble_tracker:

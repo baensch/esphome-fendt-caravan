@@ -78,11 +78,9 @@ wifi:
   ssid: "YOUR_WIFI_SSID"
   password: "YOUR_WIFI_PASSWORD"
 
-# Load the local fendt_caravan component
+# Load the fendt_caravan component
 external_components:
-  - source:
-      type: local
-      path: components
+  - source: github://lukx/esphome-fendt-caravan
     components: [fendt_caravan]
 
 # BLE Scanner and Client
