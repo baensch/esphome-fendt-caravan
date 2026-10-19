@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cctype>
 #include <ctime>
+#include <cmath>
 #include <iomanip>
 #include <string>
 #include <vector>
